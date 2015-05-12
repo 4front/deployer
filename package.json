@@ -1,0 +1,40 @@
+{
+  "name": "4front-deployer",
+  "version": "1.0.0",
+  "description": "Deployment module for the 4front front-end web app platform",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/4front/deployer.git"
+  },
+  "keywords": [
+    "4front",
+    "deploy"
+  ],
+  "author": "David Von Lehman <https://github.com/dvonlehman>",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/4front/deployer/issues"
+  },
+  "homepage": "https://github.com/4front/deployer",
+  "dependencies": {
+    "async": "^0.9.0",
+    "debug": "^2.2.0",
+    "deployer": "0.0.6",
+    "lodash": "^3.8.0",
+    "shortid": "^2.2.2",
+    "simple-errors": "^1.0.1"
+  },
+  "devDependencies": {
+    "dash-assert": "^1.0.2",
+    "istanbul": "^0.3.14",
+    "mocha": "^2.2.4",
+    "sinon": "^1.14.1"
+  }
+}
