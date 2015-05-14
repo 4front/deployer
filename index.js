@@ -20,7 +20,9 @@ module.exports = function(settings) {
   return {
     createVersion: createVersion,
     markVersionComplete: markVersionComplete,
-    deployFile: deployFile
+    deployFile: deployFile,
+    deleteVersion: deleteVersion,
+    deleteAllVersions: deleteAllVersions
   };
 
   function createVersion(versionData, context, callback) {
@@ -28,6 +30,7 @@ module.exports = function(settings) {
       // Generate a new unique versionId
       versionId: shortid.generate(),
       appId: context.virtualApp.appId,
+      userId: context.user.userId,
       // Versions are not marked as complete initially. A second api call to /complete is required
       // to flip the complete flag to true after all the files are successfully deployed.
       complete: false
@@ -128,5 +131,28 @@ module.exports = function(settings) {
       file.maxAge = settings.defaultMaxAge;
 
     settings.storage.writeFile(file, callback);
+  }
+
+  function deleteVersion(versionId, context, callback) {
+    settings.database.getVersion(context.virtualApp.appId, versionId, function(err, version) {
+      // Ensure the appId in the URL matches the appId of the version.
+      if (!version)
+        return next(Error.create("Version " + versionId + " does not exist", {code: "versionNotFound"}));
+
+      async.parallel([
+        function(cb) {
+          settings.database.deleteVersion(context.virtualApp.appId, versionId, cb);
+        },
+        function(cb) {
+          settings.storage.deleteFiles(context.virtualApp.appId + '/' + versionId, cb);
+        }
+      ], callback);
+    });
+  }
+
+  // Delete all the versions for an application
+  function deleteAllVersions(appId, context, callback) {
+    // TODO: The current logic in the database to delete all the versions should really be here.
+    settings.storage.deleteFiles(appId, callback);
   }
 };

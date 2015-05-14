@@ -27,12 +27,21 @@ describe('deployer', function() {
       }),
       updateTrafficRules: sinon.spy(function(appId, environment, trafficRules, callback) {
         callback(null);
+      }),
+      getVersion: sinon.spy(function(appId, versionId, callback) {
+        callback(null, {versionId: versionId});
+      }),
+      deleteVersion: sinon.spy(function(appId, versionId, callback) {
+        callback(null, null);
       })
     };
 
     this.settings.storage = {
       writeFile: sinon.spy(function(fileInfo, callback) {
         callback(null);
+      }),
+      deleteFiles: sinon.spy(function(prefix, callback) {
+        callback();
       })
     };
 
@@ -50,6 +59,9 @@ describe('deployer', function() {
       organization: {
         orgId: shortid.generate(),
         environments: ['production']
+      },
+      user: {
+        userId: shortid.generate()
       }
     };
 
@@ -71,6 +83,7 @@ describe('deployer', function() {
       assert.isTrue(self.settings.database.createVersion.calledWith(sinon.match({
         versionId: sinon.match.string,
         appId: self.context.virtualApp.appId,
+        userId: self.context.user.userId,
         username: 'username',
         name: versionData.name
       })));
@@ -176,6 +189,26 @@ describe('deployer', function() {
         path: self.context.virtualApp.appId + '/' + versionId + '/views/hello.html',
         size: contents.length
       })));
+
+      done();
+    });
+  });
+
+  it('delete version', function(done) {
+    var versionId = shortid.generate();
+
+    this.deployer.deleteVersion(versionId, this.context, function(err) {
+      assert.isTrue(self.settings.database.getVersion.calledWith(self.context.virtualApp.appId, versionId));
+      assert.isTrue(self.settings.database.deleteVersion.calledWith(self.context.virtualApp.appId, versionId));
+      assert.isTrue(self.settings.storage.deleteFiles.calledWith(self.context.virtualApp.appId + '/' + versionId));
+
+      done();
+    });
+  });
+
+  it('deletes all versions', function(done) {
+    this.deployer.deleteAllVersions(this.context.virtualApp.appId, this.context, function(err) {
+      assert.isTrue(self.settings.storage.deleteFiles.calledWith(self.context.virtualApp.appId));
 
       done();
     });
