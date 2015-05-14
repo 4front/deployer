@@ -2,9 +2,14 @@ var _ = require('lodash');
 var async = require('async');
 var urljoin = require('url-join');
 var shortid = require('shortid');
+var unzip = require('unzip');
+var readdirp = require('readdirp');
+var zlib = require('zlib');
 var debug = require('debug')('4front:deployer');
 
 require('simple-errors');
+
+var compressExtensions = ['.css', '.js', '.json', '.txt', '.svg'];
 
 module.exports = function(settings) {
   if (!settings.database)
@@ -131,6 +136,49 @@ module.exports = function(settings) {
       file.maxAge = settings.defaultMaxAge;
 
     settings.storage.writeFile(file, callback);
+  }
+
+  // Download the archive url and deploy all the files therein as a new version
+  function deployArchive(archiveStream, versionId, context, callback) {
+    var extractDir = path.join(os.tmpdir(), versionId);
+    async.series([
+      function(cb) {
+        // Create a tmp directory
+        fs.mkdir(extractDir, cb);
+      },
+      function(cb) {
+        var error = false;
+        archiveStream.pipe(unzip.Extract({ path: extractDir }))
+          .on('error', function(err) {
+            error = true;
+            cb(err);
+          })
+          .on('end', function() {
+            if (!error)
+              cb();
+          });
+      },
+      function(cb) {
+        // Gather up all the files and deploy them
+        readdirp({ root: extractDir, entryType: 'files' }, function() {}, function(err, files) {
+          if (err) return cb(err);
+
+          var contents = fs.createReadStream(fileInfo.fullPath);
+
+          var compress = _.contains(compressExtensions, path.extname(fileInfo.filePath));
+          if (compress)
+            contents = contents.pipe(zlib.createGzip());
+
+          async.each(files, function(fileInfo, cb1) {
+            deployFile({
+              contents: contents,
+              size: fileInfo.stat.size,
+              path: path.resolve(extractDir, fileInfo.fullPath).replace(/\\/g, '/')
+            }, versionId, context, cb1);
+          }, cb);
+        });
+      }
+    ], callback);
   }
 
   function deleteVersion(versionId, context, callback) {
