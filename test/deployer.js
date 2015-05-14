@@ -2,6 +2,7 @@ var assert = require('assert');
 var _ = require('lodash');
 var sinon = require('sinon');
 var shortid = require('shortid');
+var sbuff = require('simple-bufferstream');
 var deployer = require('..');
 
 require('dash-assert');
@@ -18,9 +19,6 @@ describe('deployer', function() {
       createVersion: sinon.spy(function(data, callback) {
         callback(null, _.extend(data, {complete: false}));
       }),
-      deleteVersion: sinon.spy(function(appId, callback) {
-        callback(null);
-      }),
       nextVersionNum: sinon.spy(function(appId, callback) {
         callback(null, self.nextVersionNum);
       }),
@@ -32,23 +30,26 @@ describe('deployer', function() {
       })
     };
 
+    this.settings.storage = {
+      writeFile: sinon.spy(function(fileInfo, callback) {
+        callback(null);
+      })
+    };
+
     this.settings.virtualAppRegistry = this.virtualAppRegistry = {
       flushApp: sinon.spy(function(app) {
       })
     };
 
-    this.settings.storage = {
-      // writeVersionFile: sinon.spy(function(appId, callback) {
-      //   callback();
-      // })
-    };
-
     this.context = {
       virtualApp: {
-        appId: shortid.generate()
+        appId: shortid.generate(),
+        url: 'http://app.apphost.com',
+        trafficControlEnabled: false
       },
       organization: {
-        orgId: shortid.generate()
+        orgId: shortid.generate(),
+        environments: ['production']
       }
     };
 
@@ -104,8 +105,78 @@ describe('deployer', function() {
     });
   });
 
-  it('markVersionComplete', function(done) {
-    this.deployer.markVersionComplete(versionId, context, options, function(err, version) {
+  describe('markVersionComplete', function() {
+    it('force all traffic to new version', function(done) {
+      var options = {forceAllTrafficToNewVersion: true};
+      var versionId = shortid.generate();
+
+      this.deployer.markVersionComplete(versionId, this.context, options, function(err, version) {
+        assert.isTrue(self.settings.database.updateVersion.called);
+
+        assert.isTrue(self.settings.database.updateVersion.calledWith(sinon.match({
+          appId: self.context.virtualApp.appId,
+          versionId: versionId,
+          complete: true
+        })));
+
+        assert.isTrue(self.settings.database.updateTrafficRules.calledWith(
+          self.context.virtualApp.appId,
+          'production',
+          [{versionId: versionId, rule: "*"}]
+        ));
+
+        assert.ok(self.virtualAppRegistry.flushApp.calledWith(self.context.virtualApp));
+        assert.equal(version.previewUrl, 'http://app.apphost.com');
+
+        done();
+      });
+    });
+
+    it('do not direct any traffic to it', function(done) {
+      self.context.virtualApp.trafficControlEnabled = true;
+      var options = {forceAllTrafficToNewVersion: false};
+      var versionId = shortid.generate();
+
+      this.deployer.markVersionComplete(versionId, this.context, options, function(err, version) {
+        assert.isTrue(self.settings.database.updateVersion.calledWith(sinon.match({
+          appId: self.context.virtualApp.appId,
+          versionId: versionId,
+          complete: true
+        })));
+
+        assert.isFalse(self.settings.database.updateTrafficRules.called);
+        assert.isFalse(self.virtualAppRegistry.flushApp.called);
+        assert.equal(version.previewUrl, 'http://app.apphost.com?_version=' + versionId);
+
+        done();
+      });
+    });
+
+    it('no environments exist', function(done) {
+      this.context.organization.environments = [];
+      this.deployer.markVersionComplete(shortid.generate(), this.context, null, function(err, version) {
+        assert.equal(err.code, 'noEnvironmentsExist');
+        done();
+      });
+    });
+  });
+
+  it('deployFile', function(done) {
+    var versionId = shortid.generate();
+
+    var contents = "<html></html>";
+    var file = {
+      path: 'views/hello.html',
+      contents: sbuff(contents),
+      size: contents.length
+    };
+
+    this.deployer.deployFile(file, versionId, this.context, function(err) {
+      assert.isTrue(self.settings.storage.writeFile.calledWith(sinon.match({
+        path: self.context.virtualApp.appId + '/' + versionId + '/views/hello.html',
+        size: contents.length
+      })));
+
       done();
     });
   });

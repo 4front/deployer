@@ -1,5 +1,6 @@
 var _ = require('lodash');
 var async = require('async');
+var urljoin = require('url-join');
 var shortid = require('shortid');
 var debug = require('debug')('4front:deployer');
 
@@ -11,6 +12,10 @@ module.exports = function(settings) {
 
   if (!settings.storage)
     throw new Error("Missing storage option");
+
+  _.defaults(settings, {
+    defaultMaxAge: 30 * 60 * 30
+  });
 
   return {
     createVersion: createVersion,
@@ -96,38 +101,32 @@ module.exports = function(settings) {
       // which can be previewed via a special link.
       if (options.forceAllTrafficToNewVersion !== true) {
         //TODO: Need to incorporate the environment name into the preview URL.
-        version.previewUrl = virtualApp.url + '?_version=' + version.versionId;
+        version.previewUrl = context.virtualApp.url + '?_version=' + version.versionId;
         return callback(null, version);
       }
 
       debug("forcing all %s traffic to new version %s", environment, version.versionId);
-      version.previewUrl = req.ext.virtualApp.url;
+      version.previewUrl = context.virtualApp.url;
 
       var trafficRules = [{versionId: version.versionId, rule: "*"}];
       settings.database.updateTrafficRules(context.virtualApp.appId, environment, trafficRules, function(err) {
         if (err) return callback(err);
 
-        settings.virtualAppRegistry.flushApp(virtualApp);
+        settings.virtualAppRegistry.flushApp(context.virtualApp);
         return callback(null, version);
       });
     });
   }
 
-  function deployFile(filePath, fileStream, context, callback) {
-    debug('deploying file %s', filePath);
+  function deployFile(file, versionId, context, callback) {
+    debug('deploying file %s', file.path);
 
-    var fileInfo = {
-      path: filePath,
-      // Pipe through passthrough stream as setting req.storage.blob to req directly
-      // doesn't work.
-      contents: fileStream.pipe(through(function(chunk, enc, cb) {
-        this.push(chunk);
-        cb();
-      })),
-      size: req.header('content-length'),
-      gzipEncoded: settings.contentType === 'application/gzip'
-    };
+    // Prepend the appId/versionId to the filePath
+    file.path = urljoin(context.virtualApp.appId, versionId, file.path);
 
-    settings.storage.deployFile(virtualApp.appId, versionId, fileInfo, callback);
+    if (!file.maxAge)
+      file.maxAge = settings.defaultMaxAge;
+
+    settings.storage.writeFile(file, callback);
   }
 };
