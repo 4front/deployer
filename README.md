@@ -15,7 +15,7 @@ npm test
 ## License
 Licensed under the Apache License, Version 2.0. See (http://www.apache.org/licenses/LICENSE-2.0).
 
-[travis-image]: https://img.shields.io/travis/4front/deployer.svg?style=flat
+[travis-image]: https://travis-ci.org/4front/deployer.svg
 [travis-url]: https://travis-ci.org/4front/deployer
-[coveralls-image]: https://img.shields.io/coveralls/4front/deployer.svg?style=flat
+[coveralls-image]: https://coveralls.io/repos/4front/deployer/badge.svg?branch=master
 [coveralls-url]: https://coveralls.io/r/4front/deployer?branch=master
