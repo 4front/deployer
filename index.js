@@ -3,7 +3,10 @@ var async = require('async');
 var urljoin = require('url-join');
 var shortid = require('shortid');
 var unzip = require('unzip');
+var os = require('os');
+var fs = require('fs');
 var readdirp = require('readdirp');
+var path = require('path');
 var zlib = require('zlib');
 var debug = require('debug')('4front:deployer');
 
@@ -27,7 +30,8 @@ module.exports = function(settings) {
     markVersionComplete: markVersionComplete,
     deployFile: deployFile,
     deleteVersion: deleteVersion,
-    deleteAllVersions: deleteAllVersions
+    deleteAllVersions: deleteAllVersions,
+    deployArchive: deployArchive
   };
 
   function createVersion(versionData, context, callback) {
@@ -139,8 +143,10 @@ module.exports = function(settings) {
   }
 
   // Download the archive url and deploy all the files therein as a new version
-  function deployArchive(archiveStream, versionId, context, callback) {
+  function deployArchive(archiveStream, versionId, nestedDir, context, callback) {
     var extractDir = path.join(os.tmpdir(), versionId);
+    var rootDirName;
+
     async.series([
       function(cb) {
         // Create a tmp directory
@@ -148,32 +154,55 @@ module.exports = function(settings) {
       },
       function(cb) {
         var error = false;
+        debug("unzipping archive to %s", extractDir);
         archiveStream.pipe(unzip.Extract({ path: extractDir }))
           .on('error', function(err) {
             error = true;
-            cb(err);
+            return cb(err);
           })
-          .on('end', function() {
+          .on('close', function() {
+            debug("done unzipping archive");
             if (!error)
               cb();
           });
       },
       function(cb) {
-        // Gather up all the files and deploy them
-        readdirp({ root: extractDir, entryType: 'files' }, function() {}, function(err, files) {
+        // Find the name of the root directory in the extractDir
+        fs.readdir(extractDir, function(err, entries) {
+          if (entries.length !== 1)
+            return cb(new Error("Invalid archive. Does not have a single root directory"));
+
+          fs.stat(path.join(extractDir, entries[0]), function(err, stats) {
+            if (stats.isDirectory() !== true)
+              return cb(new Error("Invalid archive. Root entry is not a directory."));
+
+            rootDirName = entries[0];
+            cb();
+          });
+        });
+      },
+      function(cb) {
+        debug("collecting unzipped files to deploy");
+        // Gather up all the files starting at the root of the top level directory
+        // from the extract.
+        readdirp({ root: path.join(extractDir, rootDirName, nestedDir || '/'), entryType: 'files' }, function() {}, function(err, res) {
           if (err) return cb(err);
 
-          var contents = fs.createReadStream(fileInfo.fullPath);
+          async.each(res.files, function(fileInfo, cb1) {
+            var contents = fs.createReadStream(fileInfo.fullPath);
 
-          var compress = _.contains(compressExtensions, path.extname(fileInfo.filePath));
-          if (compress)
-            contents = contents.pipe(zlib.createGzip());
+            // Check if the file should be compressed based on the extension
+            debugger;
+            var compress = _.contains(compressExtensions, path.extname(fileInfo.path));
+            if (compress)
+              contents = contents.pipe(zlib.createGzip());
 
-          async.each(files, function(fileInfo, cb1) {
+            // Need to trim off the first path portion which corresponds to the
             deployFile({
               contents: contents,
               size: fileInfo.stat.size,
-              path: path.resolve(extractDir, fileInfo.fullPath).replace(/\\/g, '/')
+              path: fileInfo.path.replace(/\\/g, '/'),
+              gzipEncoded: compress
             }, versionId, context, cb1);
           }, cb);
         });

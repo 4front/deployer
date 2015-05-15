@@ -1,8 +1,14 @@
 var assert = require('assert');
+var async = require('async');
+var rimraf = require('rimraf');
+var fs = require('fs');
+var os = require('os');
+var path = require('path');
 var _ = require('lodash');
 var sinon = require('sinon');
 var shortid = require('shortid');
 var sbuff = require('simple-bufferstream');
+var archiver = require('archiver');
 var deployer = require('..');
 
 require('dash-assert');
@@ -211,6 +217,88 @@ describe('deployer', function() {
       assert.isTrue(self.settings.storage.deleteFiles.calledWith(self.context.virtualApp.appId));
 
       done();
+    });
+  });
+
+  describe('deployArchive', function() {
+    beforeEach(function() {
+      self = this;
+      this.versionId = shortid.generate();
+      this.sampleArchivePath = path.join(os.tmpdir(), 'sample-app.zip');
+      this.sampleArchive = fs.createWriteStream(this.sampleArchivePath);
+
+      this.sampleFiles = ['index.html', 'js/app.js', 'css/app.css'];
+    });
+
+    afterEach(function(cb) {
+      rimraf(this.sampleArchivePath, cb);
+    });
+
+    it('deployArchive from root', function(done) {
+      async.series([
+        function(cb) {
+          // Create the temp sample app archive
+          var archive = archiver.create('zip')
+            .directory(path.join(__dirname, './fixtures/sample-app'), 'sample-app')
+            .finalize();
+
+          archive.pipe(self.sampleArchive);
+          self.sampleArchive.on('close', function() {
+            cb();
+          });
+        },
+        function(cb) {
+          var archiveStream = fs.createReadStream(self.sampleArchivePath);
+          self.deployer.deployArchive(archiveStream, self.versionId, '/', self.context, function(err) {
+            if (err) return cb(err);
+
+            assert.equal(self.settings.storage.writeFile.callCount, 3);
+
+            assert.every(self.sampleFiles, function(file) {
+              return self.settings.storage.writeFile.calledWith(sinon.match({
+                path: self.context.virtualApp.appId + '/' + self.versionId + '/' + file,
+                gzipEncoded: file != 'index.html'
+              }));
+            });
+
+            cb();
+          });
+        }
+      ], done);
+    });
+
+    it('deployArchive using sub-folder', function(done) {
+      async.series([
+        function(cb) {
+          // Create the temp sample app archive. This time nest the files in an
+          // additional "dist" directory.
+          var archive = archiver.create('zip')
+            .directory(path.join(__dirname, './fixtures/sample-app'), 'sample-app/dist')
+            .finalize();
+
+          archive.pipe(self.sampleArchive);
+          self.sampleArchive.on('close', function() {
+            cb();
+          });
+        },
+        function(cb) {
+          var archiveStream = fs.createReadStream(self.sampleArchivePath);
+          self.deployer.deployArchive(archiveStream, self.versionId, '/dist', self.context, function(err) {
+            if (err) return cb(err);
+
+            assert.equal(self.settings.storage.writeFile.callCount, 3);
+
+            assert.every(self.sampleFiles, function(file) {
+              return self.settings.storage.writeFile.calledWith(sinon.match({
+                path: self.context.virtualApp.appId + '/' + self.versionId + '/' + file,
+                gzipEncoded: file != 'index.html'
+              }));
+            });
+
+            cb();
+          });
+        }
+      ], done);
     });
   });
 });
