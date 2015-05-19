@@ -39,7 +39,7 @@ module.exports = function(settings) {
     versionData = _.pick(versionData, 'name', 'message', 'manifest');
 
     if (_.isObject(versionData.manifest) === false) {
-      return callback(Error.create("Missing version manifest", {code: "missingManifest"}));
+      return callback(Error.create("Missing version manifest", {status: 400, code: "missingManifest"}));
     }
 
     _.extend(versionData, {
