@@ -35,6 +35,13 @@ module.exports = function(settings) {
   };
 
   function createVersion(versionData, context, callback) {
+    // Just pick out the valid properties
+    versionData = _.pick(versionData, 'name', 'message', 'manifest');
+
+    if (_.isObject(versionData.manifest) === false) {
+      return callback(Error.create("Missing version manifest", {code: "missingManifest"}));
+    }
+
     _.extend(versionData, {
       // Generate a new unique versionId
       versionId: shortid.generate(),

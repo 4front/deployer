@@ -74,53 +74,64 @@ describe('deployer', function() {
     this.deployer = deployer(this.settings);
   });
 
-  it('createVersion', function(done) {
-    var versionData = {
-      name: 'name',
-      username: 'username'
-    };
-
-    this.deployer.createVersion(versionData, this.context, function(err, version) {
-      if (err) return done(err);
-
-      assert.isTrue(self.settings.database.nextVersionNum.calledWith
-        (self.context.virtualApp.appId));
-
-      assert.isTrue(self.settings.database.createVersion.calledWith(sinon.match({
-        versionId: sinon.match.string,
-        appId: self.context.virtualApp.appId,
-        userId: self.context.user.userId,
+  describe("createVersion", function() {
+    it('succeeds', function(done) {
+      var versionData = {
+        name: 'name',
         username: 'username',
-        name: versionData.name
-      })));
+        manifest: {router: []}
+      };
 
-      assert.isMatch(version, {
-        name: versionData.name,
-        appId: self.context.virtualApp.appId
+      this.deployer.createVersion(versionData, this.context, function(err, version) {
+        if (err) return done(err);
+
+        assert.isTrue(self.settings.database.nextVersionNum.calledWith
+          (self.context.virtualApp.appId));
+
+        assert.isTrue(self.settings.database.createVersion.calledWith(sinon.match({
+          versionId: sinon.match.string,
+          appId: self.context.virtualApp.appId,
+          userId: self.context.user.userId,
+          name: versionData.name,
+          manifest: versionData.manifest
+        })));
+
+        assert.isMatch(version, {
+          name: versionData.name,
+          appId: self.context.virtualApp.appId
+        });
+
+        done();
       });
-
-      done();
     });
-  });
 
-  it('createVersion and generate name', function(done) {
-    var versionData = {
-      username: 'username'
-    };
-
-    this.deployer.createVersion(versionData, this.context, function(err, version) {
-      if (err) return done(err);
-
-      assert.isTrue(self.settings.database.createVersion.calledWith(sinon.match({
-        versionId: sinon.match.string,
-        appId: self.context.virtualApp.appId,
+    it('auto-generate version name', function(done) {
+      var versionData = {
         username: 'username',
-        name: 'v' + self.nextVersionNum
-      })));
+        manifest: {}
+      };
 
-      assert.equal(version.name, 'v' + self.nextVersionNum);
+      this.deployer.createVersion(versionData, this.context, function(err, version) {
+        if (err) return done(err);
 
-      done();
+        assert.isTrue(self.settings.database.createVersion.calledWith(sinon.match({
+          versionId: sinon.match.string,
+          appId: self.context.virtualApp.appId,
+          name: 'v' + self.nextVersionNum,
+          manifest: versionData.manifest
+        })));
+
+        assert.equal(version.name, 'v' + self.nextVersionNum);
+
+        done();
+      });
+    });
+
+    it('missing manifest raises error', function(done) {
+      this.deployer.createVersion({}, this.context, function(err, version) {
+        assert.equal(err.code, 'missingManifest');
+        done();
+      });
     });
   });
 
