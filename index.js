@@ -31,7 +31,8 @@ module.exports = function(settings) {
     deployFile: deployFile,
     deleteVersion: deleteVersion,
     deleteAllVersions: deleteAllVersions,
-    deployArchive: deployArchive
+    deployArchive: deployArchive,
+    serveFile: serveFile
   };
 
   function createVersion(versionData, context, callback) {
@@ -238,5 +239,28 @@ module.exports = function(settings) {
   function deleteAllVersions(appId, context, callback) {
     // TODO: The current logic in the database to delete all the versions should really be here.
     settings.storage.deleteFiles(appId, callback);
+  }
+
+  // Serve the specified file asset to the http response
+  function serveFile(appId, versionId, filePath, res) {
+    var storagePath = urljoin(appId, versionId, filePath);
+
+    settings.storage.getMetadata(storagePath, function(err, metadata) {
+      if (!metadata)
+        return res.status(404).send("Not Found");
+
+      var readStream = settings.storage.readFileStream(storagePath);
+
+      if (metadata.ContentEncoding)
+        res.set('Content-Encoding', metadata.ContentEncoding);
+
+      if (metadata.ContentType)
+        res.set('Content-Type', metadata.ContentType);
+
+      if (metadata.CacheControl)
+        res.set('Cache-Control', metadata.CacheControl);
+
+      readStream.pipe(res);
+    });
   }
 };
