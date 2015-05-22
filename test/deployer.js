@@ -348,4 +348,62 @@ describe('deployer', function() {
       ], done);
     });
   });
+
+  describe('serveFile', function() {
+    beforeEach(function() {
+      self = this;
+
+      this.fileStream = {
+        pipe: sinon.spy(function(){})
+      };
+
+      this.settings.storage.readFileStream = sinon.spy(function(storagePage){
+        return self.fileStream;
+      });
+
+      this.httpResponse = {
+        set: sinon.spy(function(key, value){}),
+        pipe: sinon.spy(function(){}),
+        status: sinon.spy(function(statusCode){
+          return self.httpResponse;
+        }),
+        send: sinon.spy(function(content){})
+      };
+
+      this.versionId = shortid.generate();
+    });
+
+    it('serves file', function(done) {
+      this.settings.storage.getMetadata = sinon.spy(function(storagePath, callback) {
+        callback(null, {
+          ContentType: 'application/javascript',
+          CacheControl: 'maxage=1000'
+        });
+      });
+
+      this.deployer.serveFile(self.context.virtualApp.appId, this.versionId, "/js/main.js", this.httpResponse);
+
+      assert.ok(self.settings.storage.getMetadata.calledWith(
+        self.context.virtualApp.appId + '/' +
+        this.versionId + '/js/main.js'));
+
+      assert.ok(this.httpResponse.set.calledWith('Content-Type', 'application/javascript'));
+      assert.ok(this.httpResponse.set.calledWith('Cache-Control', 'maxage=1000'));
+      assert.ok(this.fileStream.pipe.calledWith(this.httpResponse));
+
+      done();
+    });
+
+    it('throws 404 for missing file', function(done) {
+      this.settings.storage.getMetadata = sinon.spy(function(storagePath, callback) {
+        callback(null, null);
+      });
+
+      this.deployer.serveFile(self.context.virtualApp.appId, this.versionId, "/js/main.js", this.httpResponse);
+      assert.ok(this.httpResponse.status.calledWith(404));
+      assert.ok(this.httpResponse.send.calledWith("Not Found"));
+      assert.isFalse(this.settings.storage.readFileStream.called);
+      done();
+    });
+  });
 });
