@@ -27,7 +27,7 @@ module.exports = function(settings) {
 
   return {
     createVersion: createVersion,
-    markVersionComplete: markVersionComplete,
+    updateVersionStatus: updateVersionStatus,
     deployFile: deployFile,
     deleteVersion: deleteVersion,
     deleteAllVersions: deleteAllVersions,
@@ -47,9 +47,9 @@ module.exports = function(settings) {
       versionId: shortid.generate(),
       appId: context.virtualApp.appId,
       userId: context.user.userId,
-      // Versions are not marked as complete initially. A second api call to /complete is required
-      // to flip the complete flag to true after all the files are successfully deployed.
-      complete: false
+      // Initially versions are in-progress. Once all files are deployed successfully, the status
+      // is updated to 'complete'.
+      status: 'initiated'
     });
 
     if (_.isEmpty(versionData.message))
@@ -90,31 +90,22 @@ module.exports = function(settings) {
     });
   }
 
-  function markVersionComplete(versionId, context, options, callback) {
-    // Get the name of the first environment in the pipeline. If the app has
-    // overridden the organization settings use them, otherwise use the org
-    // defaults.
-    var environments = context.organization ?
-      context.organization.environments : virtualApp.environments;
+  function updateVersionStatus(versionData, context, options, callback) {
+    if (_.contains(['complete', 'failed'], versionData.status) === false)
+      return callback(new Error("Updated version status must be 'complete' or 'failed'"));
 
-    if (_.isEmpty(environments))
-      return callback(Error.create("No environments configured", {code: "noEnvironmentsExist"}));
-
-    // Deployments are done to the first environment in the pipeline. Promotion to subsequent
-    // environments entails updating the traffic rules for those envs.
-    var environment = environments[0];
-
-    // If traffic control is not enabled on this app, then new deployments
-    // automatically take all the traffic.
-    if (context.virtualApp.trafficControlEnabled !== true)
-      options.forceAllTrafficToNewVersion = true;
-
-    settings.database.updateVersion({
-      appId: context.virtualApp.appId,
-      versionId: versionId,
-      complete: true
-    }, function(err, version) {
+    versionData.appId = context.virtualApp.appId;
+    settings.database.updateVersion(versionData, function(err, version) {
       if (err) return next(err);
+
+      // If the status of the version is not complete, then exit now.
+      if (version.status !== 'complete')
+        return callback(null, version);
+
+      // If traffic control is not enabled on this app, then new deployments
+      // automatically take all the traffic.
+      if (context.virtualApp.trafficControlEnabled !== true)
+        options.forceAllTrafficToNewVersion = true;
 
       // If new version doesnt take all traffic, then it is just a draft deploy
       // which can be previewed via a special link.
@@ -123,6 +114,20 @@ module.exports = function(settings) {
         version.previewUrl = context.virtualApp.url + '?_version=' + version.versionId;
         return callback(null, version);
       }
+
+      // Get the name of the first environment in the pipeline. If the app has
+      // overridden the organization settings use them, otherwise use the org
+      // defaults.
+      var environments = context.organization ?
+        context.organization.environments : virtualApp.environments;
+
+      // If there are no environments, then there is no place to direct traffic.
+      if (_.isEmpty(environments))
+        return callback(null, version);
+
+      // Deployments are done to the first environment in the pipeline. Promotion to subsequent
+      // environments entails updating the traffic rules for those envs.
+      var environment = environments[0];
 
       debug("forcing all %s traffic to new version %s", environment, version.versionId);
       version.previewUrl = context.virtualApp.url;
@@ -192,6 +197,9 @@ module.exports = function(settings) {
         debug("collecting unzipped files to deploy");
         // Gather up all the files starting at the root of the top level directory
         // from the extract.
+
+        // TODO: If nestedDir, ensure that it exists.
+
         readdirp({ root: path.join(extractDir, rootDirName, nestedDir || '/'), entryType: 'files' }, function() {}, function(err, res) {
           if (err) return cb(err);
 

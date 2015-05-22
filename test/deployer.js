@@ -98,7 +98,8 @@ describe('deployer', function() {
 
         assert.isMatch(version, {
           name: versionData.name,
-          appId: self.context.virtualApp.appId
+          appId: self.context.virtualApp.appId,
+          status: 'initiated'
         });
 
         done();
@@ -135,24 +136,28 @@ describe('deployer', function() {
     });
   });
 
-  describe('markVersionComplete', function() {
+  describe('updateVersionStatus', function() {
     it('force all traffic to new version', function(done) {
       var options = {forceAllTrafficToNewVersion: true};
-      var versionId = shortid.generate();
 
-      this.deployer.markVersionComplete(versionId, this.context, options, function(err, version) {
+      var versionData = {
+        versionId: shortid.generate(),
+        status: 'complete'
+      };
+
+      this.deployer.updateVersionStatus(versionData, this.context, options, function(err, version) {
         assert.isTrue(self.settings.database.updateVersion.called);
 
         assert.isTrue(self.settings.database.updateVersion.calledWith(sinon.match({
           appId: self.context.virtualApp.appId,
-          versionId: versionId,
-          complete: true
+          versionId: versionData.versionId,
+          status: 'complete'
         })));
 
         assert.isTrue(self.settings.database.updateTrafficRules.calledWith(
           self.context.virtualApp.appId,
           'production',
-          [{versionId: versionId, rule: "*"}]
+          [{versionId: versionData.versionId, rule: "*"}]
         ));
 
         assert.ok(self.virtualAppRegistry.flushApp.calledWith(self.context.virtualApp));
@@ -165,27 +170,58 @@ describe('deployer', function() {
     it('do not direct any traffic to it', function(done) {
       self.context.virtualApp.trafficControlEnabled = true;
       var options = {forceAllTrafficToNewVersion: false};
-      var versionId = shortid.generate();
+      var versionData = {
+        versionId: shortid.generate(),
+        status: 'complete'
+      };
 
-      this.deployer.markVersionComplete(versionId, this.context, options, function(err, version) {
+      this.deployer.updateVersionStatus(versionData, this.context, options, function(err, version) {
         assert.isTrue(self.settings.database.updateVersion.calledWith(sinon.match({
           appId: self.context.virtualApp.appId,
-          versionId: versionId,
-          complete: true
+          versionId: versionData.versionId,
+          status: 'complete'
         })));
 
         assert.isFalse(self.settings.database.updateTrafficRules.called);
         assert.isFalse(self.virtualAppRegistry.flushApp.called);
-        assert.equal(version.previewUrl, 'http://app.apphost.com?_version=' + versionId);
+        assert.equal(version.previewUrl, 'http://app.apphost.com?_version=' + versionData.versionId);
 
         done();
       });
     });
 
-    it('no environments exist', function(done) {
+    it('version status updated to failed', function(done) {
+      var versionData = {
+        versionId: shortid.generate(),
+        status: 'failed',
+        error: 'Version failed to deploy'
+      };
+
+      var options = {forceAllTrafficToNewVersion: false};
+
+      this.deployer.updateVersionStatus(versionData, this.context, options, function(err, version) {
+        assert.isTrue(self.settings.database.updateVersion.calledWith(sinon.match({
+          appId: self.context.virtualApp.appId,
+          versionId: versionData.versionId,
+          status: 'failed',
+          error: versionData.error
+        })));
+
+        assert.isFalse(self.settings.database.updateTrafficRules.called);
+        done();
+      });
+    });
+
+    it('traffic rules not updated if no environments exist', function(done) {
       this.context.organization.environments = [];
-      this.deployer.markVersionComplete(shortid.generate(), this.context, null, function(err, version) {
-        assert.equal(err.code, 'noEnvironmentsExist');
+
+      var versionData = {
+        versionId: shortid.generate(),
+        status: 'complete'
+      };
+
+      this.deployer.updateVersionStatus(shortid.generate(), this.context, null, function(err, version) {
+        assert.isFalse(self.settings.database.updateTrafficRules.called);
         done();
       });
     });
