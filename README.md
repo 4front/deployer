@@ -12,6 +12,8 @@ Deployment module for the [4front](http://4front.io) front-end web app platform.
 npm test
 ~~~
 
+## Notes
+
 ## License
 Licensed under the Apache License, Version 2.0. See (http://www.apache.org/licenses/LICENSE-2.0).
 

@@ -271,7 +271,7 @@ describe('deployer', function() {
     beforeEach(function() {
       self = this;
       this.versionId = shortid.generate();
-      this.sampleArchivePath = path.join(os.tmpdir(), 'sample-app.zip');
+      this.sampleArchivePath = path.join(os.tmpdir(), 'sample-app.tar.gz');
       this.sampleArchive = fs.createWriteStream(this.sampleArchivePath);
 
       this.sampleFiles = ['index.html', 'js/app.js', 'css/app.css'];
@@ -285,11 +285,12 @@ describe('deployer', function() {
       async.series([
         function(cb) {
           // Create the temp sample app archive
-          var archive = archiver.create('zip')
+          var archive = archiver.create('tar', {gzip: true})
             .directory(path.join(__dirname, './fixtures/sample-app'), 'sample-app')
             .finalize();
 
           archive.pipe(self.sampleArchive);
+
           self.sampleArchive.on('close', function() {
             cb();
           });
@@ -319,7 +320,7 @@ describe('deployer', function() {
         function(cb) {
           // Create the temp sample app archive. This time nest the files in an
           // additional "dist" directory.
-          var archive = archiver.create('zip')
+          var archive = archiver.create('tar', {gzip: true})
             .directory(path.join(__dirname, './fixtures/sample-app'), 'sample-app/dist')
             .finalize();
 
@@ -342,6 +343,25 @@ describe('deployer', function() {
               }));
             });
 
+            cb();
+          });
+        }
+      ], done);
+    });
+
+    it('deployArchive from missing sub-folder', function(done) {
+      async.series([
+        function(cb) {
+          var archive = archiver.create('tar', {gzip: true})
+            .directory(path.join(__dirname, './fixtures/sample-app'), 'sample-app')
+            .finalize();
+
+          archive.pipe(self.sampleArchive).on('close', cb);
+        },
+        function(cb) {
+          var archiveStream = fs.createReadStream(self.sampleArchivePath);
+          self.deployer.deployArchive(archiveStream, self.versionId, '/dist', self.context, function(err) {
+            assert.ok(/Subdirectory \/dist does not exist/.test(err.message));
             cb();
           });
         }
