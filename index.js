@@ -3,7 +3,6 @@ var async = require('async');
 var urljoin = require('url-join');
 var shortid = require('shortid');
 var tar = require('tar');
-var unzip = require('unzip');
 var os = require('os');
 var fs = require('fs');
 var readdirp = require('readdirp');
