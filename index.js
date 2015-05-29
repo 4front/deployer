@@ -317,6 +317,8 @@ module.exports = function(settings) {
 
       if (metadata.CacheControl)
         res.set('Cache-Control', metadata.CacheControl);
+      else
+        res.set('Cache-Control', 'maxage=' + settings.defaultMaxAge);
 
       readStream.pipe(res);
     });
