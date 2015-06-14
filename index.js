@@ -4,6 +4,7 @@ var urljoin = require('url-join');
 var shortid = require('shortid');
 var tar = require('tar');
 var os = require('os');
+var rimraf = require('rimraf');
 
 // Use graceful-fs to handle EMFILE errors from opening too many files at once.
 var fs = require('graceful-fs');
@@ -230,7 +231,16 @@ module.exports = function(settings) {
           });
         });
       }
-    ], callback);
+    ], function(err) {
+      debug("Cleanup extracted source archive");
+      rimraf(extractDir, function(rmErr) {
+        if (rmErr) {
+          settings.logger.error(Error.create(rmErr.message, {code: "couldNotDeleteSourceArchive"}));
+        }
+
+        callback(err);
+      });
+    });
   }
 
   function getDeployPayload(fileInfo, callback) {

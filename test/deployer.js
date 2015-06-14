@@ -308,7 +308,7 @@ describe('deployer', function() {
                 gzipEncoded: file != 'index.html'
               }));
             });
-
+            
             cb();
           });
         }
