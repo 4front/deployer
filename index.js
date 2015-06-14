@@ -4,7 +4,9 @@ var urljoin = require('url-join');
 var shortid = require('shortid');
 var tar = require('tar');
 var os = require('os');
-var fs = require('fs');
+
+// Use graceful-fs to handle EMFILE errors from opening too many files at once.
+var fs = require('graceful-fs');
 var readdirp = require('readdirp');
 var path = require('path');
 var zlib = require('zlib');
@@ -323,4 +325,18 @@ module.exports = function(settings) {
       readStream.pipe(res);
     });
   }
+
+  // Split the collection into equal size groups
+  // function splitIntoGroups(coll, size) {
+  //   if (coll.length < size)
+  //     return [coll];
+  //
+  //   var numGroups = Math.ceiling(coll.length / size);
+  //
+  //   var groups = [];
+  //   for (var i=0; i<numGroups; i++) {
+  //     groups.push(_.slice(coll, i * size, size));
+  //   }
+  //   return groups;
+  // }
 };
