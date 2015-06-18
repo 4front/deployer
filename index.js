@@ -18,7 +18,7 @@ module.exports = function(settings) {
   exports.bundle = require('./lib/bundle')(settings);
 
   // Create,update, and delete versions
-  exports.versions = require('./lib/version')(settings);
+  exports.versions = require('./lib/versions')(settings);
 
   // Serve deployed static assets
   exports.serve = require('./lib/serve')(settings);
