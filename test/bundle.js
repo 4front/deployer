@@ -53,6 +53,7 @@ describe('bundle', function() {
     };
 
     this.bundle = {
+      appId: this.appId,
       stream: self.sampleArchive,
       message: 'commit message'
     };
@@ -69,6 +70,13 @@ describe('bundle', function() {
     this.mockDeploy = sinon.spy(function(appId, versionId, filePath, callback) {
       callback(null);
     });
+
+    this.settings = {
+      logger: {
+        info: function(){},
+        error: function(){}
+      }
+    };
 
     this.deployBundle = require('../lib/bundle')(this.settings);
   });
