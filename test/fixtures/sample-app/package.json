@@ -1,0 +1,8 @@
+{
+  "name": "virtual-app",
+  "_virtualApp": {
+    "router": [{
+      "module": "webpage"
+    }]
+  }
+}
