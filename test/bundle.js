@@ -53,6 +53,7 @@ describe('bundle', function() {
     };
 
     this.bundle = {
+      appId: this.appId,
       stream: self.sampleArchive,
       message: 'commit message'
     };
