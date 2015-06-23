@@ -33,6 +33,9 @@ describe('version', function() {
           callback(null, null);
         })
       },
+      logger: {
+        info: function(){}
+      },
       virtualAppRegistry: {
         flushApp: sinon.spy(function(app) {})
       },

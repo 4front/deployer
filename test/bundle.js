@@ -70,6 +70,13 @@ describe('bundle', function() {
       callback(null);
     });
 
+    this.settings = {
+      logger: {
+        info: function(){},
+        error: function(){}
+      }
+    };
+
     this.deployBundle = require('../lib/bundle')(this.settings);
   });
 
@@ -92,7 +99,7 @@ describe('bundle', function() {
         });
       },
       function(cb) {
-        self.bundle.stream = fs.createReadStream(self.sampleArchivePath);
+        self.bundle.readStream = fs.createReadStream(self.sampleArchivePath);
 
         self.deployBundle(self.bundle, self.context, function(err, deployedVersion) {
           if (err) return cb(err);
@@ -142,7 +149,7 @@ describe('bundle', function() {
         });
       },
       function(cb) {
-        self.bundle.stream = fs.createReadStream(self.sampleArchivePath);
+        self.bundle.readStream = fs.createReadStream(self.sampleArchivePath);
 
         self.deployBundle(self.bundle, self.context, function(err, deployedVersion) {
           if (err) return cb(err);
@@ -171,7 +178,7 @@ describe('bundle', function() {
         archive.pipe(self.sampleArchive).on('close', cb);
       },
       function(cb) {
-        self.bundle.stream = fs.createReadStream(self.sampleArchivePath);
+        self.bundle.readStream = fs.createReadStream(self.sampleArchivePath);
         self.deployBundle(self.bundle, self.context, function(err, deployedVersion) {
           assert.ok(self.mockVersions.updateStatus.calledWith(sinon.match({
             versionId: self.versionId,
@@ -180,7 +187,6 @@ describe('bundle', function() {
           })));
 
           assert.equal(deployedVersion.status, 'failed');
-          // assert.ok(/Sub-directory \/dist does not exist/.test(deployedVersion.error));
           cb();
         });
       }
