@@ -7,6 +7,7 @@ var rimraf = require('rimraf');
 var os = require('os');
 var sinon = require('sinon');
 var assert = require('assert');
+var sbuff = require('simple-bufferstream');
 var writefile = require('writefile');
 
 require('dash-assert');
@@ -84,11 +85,30 @@ describe('deploy', function() {
           gzipEncoded: true
         })));
 
-        debugger;
         assert.isTrue(self.settings.storage.writeFile.getCall(0).args[0].size < contents.length);
 
         done();
       });
+    });
+  });
+
+  it('deploy stream', function(done) {
+    var filePath = Date.now() + '.html';
+    var contents = "<html><div></div></html>";
+
+    var fileInfo = {
+      path: filePath,
+      contents: sbuff(contents),
+      size: contents.length
+    };
+
+    self.deploy(self.appId, self.versionId, fileInfo, function(err) {
+      assert.isTrue(self.settings.storage.writeFile.calledWith(sinon.match({
+        path: self.appId + '/' + self.versionId + '/' + filePath,
+        contents: sinon.match({_buffer: contents})
+      })));
+
+      done();
     });
   });
 });
