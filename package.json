@@ -38,6 +38,7 @@
     "shortid": "^2.2.2",
     "simple-errors": "^1.0.1",
     "tar": "^2.1.1",
+    "through2": "^2.0.0",
     "unzip2": "^0.2.5",
     "url-join": "0.0.1"
   },
