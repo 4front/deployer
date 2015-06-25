@@ -15,7 +15,7 @@ module.exports = function(settings) {
   var exports = {};
 
   // Deploy an app source bundle
-  exports.bundle = require('./lib/bundle2')(settings);
+  exports.bundle = require('./lib/bundle')(settings);
 
   // Create,update, and delete versions
   exports.versions = require('./lib/versions')(settings);
