@@ -20,7 +20,7 @@ describe('deploy', function() {
 
     this.settings= {
       storage: {
-        writeFile: sinon.spy(function(fileInfo, callback) {
+        writeStream: sinon.spy(function(fileInfo, callback) {
           callback(null);
         })
       }
@@ -46,7 +46,7 @@ describe('deploy', function() {
       };
 
       self.deploy(self.appId, self.versionId, fileInfo, function(err) {
-        assert.isTrue(self.settings.storage.writeFile.calledWith(sinon.match({
+        assert.isTrue(self.settings.storage.writeStream.calledWith(sinon.match({
           path: self.appId + '/' + self.versionId + '/' + filePath,
           size: contents.length,
           contents: sinon.match({
@@ -76,7 +76,7 @@ describe('deploy', function() {
       };
 
       self.deploy(self.appId, self.versionId, fileInfo, function(err) {
-        assert.isTrue(self.settings.storage.writeFile.calledWith(sinon.match({
+        assert.isTrue(self.settings.storage.writeStream.calledWith(sinon.match({
           path: self.appId + '/' + self.versionId + '/' + filePath,
           contents: sinon.match({
             readable: true,
@@ -85,7 +85,7 @@ describe('deploy', function() {
           gzipEncoded: true
         })));
 
-        assert.isTrue(self.settings.storage.writeFile.getCall(0).args[0].size < contents.length);
+        assert.isTrue(self.settings.storage.writeStream.getCall(0).args[0].size < contents.length);
 
         done();
       });
@@ -103,7 +103,7 @@ describe('deploy', function() {
     };
 
     self.deploy(self.appId, self.versionId, fileInfo, function(err) {
-      assert.isTrue(self.settings.storage.writeFile.calledWith(sinon.match({
+      assert.isTrue(self.settings.storage.writeStream.calledWith(sinon.match({
         path: self.appId + '/' + self.versionId + '/' + filePath,
         contents: sinon.match({_buffer: contents})
       })));
