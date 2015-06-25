@@ -23,5 +23,7 @@ module.exports = function(settings) {
   // Serve deployed static assets
   exports.serve = require('./lib/serve')(settings);
 
+  exports.deploy = require('./lib/deploy')(settings);
+
   return exports;
 };
