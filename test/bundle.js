@@ -192,34 +192,6 @@ describe('bundle', function() {
     ], done);
   });
 
-  it('deployArchive from missing sub-folder', function(done) {
-    this.bundle.deployDirectory = '/dist';
-
-    async.series([
-      function(cb) {
-        var archive = archiver.create('tar', {gzip: true})
-          .directory(path.join(__dirname, './fixtures/sample-app'), 'sample-app')
-          .finalize();
-
-        archive.pipe(self.sampleArchive).on('close', cb);
-      },
-      function(cb) {
-        self.bundle.readStream = fs.createReadStream(self.sampleArchivePath);
-        self.deployBundle(self.bundle, self.context, function(err, deployedVersion) {
-          assert.ok(self.mockVersions.updateStatus.calledWith(sinon.match({
-            appId: self.appId,
-            versionId: self.versionId,
-            status: 'failed',
-            error: 'No files found to deploy'
-          })));
-
-          assert.equal(deployedVersion.status, 'failed');
-          cb();
-        });
-      }
-    ], done);
-  });
-
   it('deploy empty archive', function(done) {
     async.series([
       function(cb) {
