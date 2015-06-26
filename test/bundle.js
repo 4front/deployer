@@ -38,7 +38,6 @@ describe('bundle', function() {
 
   beforeEach(function() {
     self = this;
-    // this.sampleArchivePath = path.join(os.tmpdir(), 'sample-app.tar.gz');
     this.sampleArchivePath = path.join(os.tmpdir(), 'sample-app.zip');
     this.sampleArchive = fs.createWriteStream(this.sampleArchivePath);
 
@@ -109,7 +108,7 @@ describe('bundle', function() {
           self.mockVersions.create.calledWith(sinon.match({
             messge: self.message,
             appId: self.appId,
-            manifest: sinon.match.object
+            manifest: {}
           }), self.context);
 
           assert.equal(self.mockDeploy.callCount, self.sampleFiles.length);
@@ -125,7 +124,8 @@ describe('bundle', function() {
 
           self.mockVersions.updateStatus.calledWith(sinon.match({
             versionId: self.versionId,
-            status: 'complete'
+            status: 'complete',
+            manifest: sinon.match({router: sinon.match.array})
           }), self.context);
 
           cb();

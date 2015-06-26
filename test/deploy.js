@@ -40,20 +40,16 @@ describe('deploy', function() {
       if (err) return done(err);
 
       var fileInfo = {
-        fullPath: fullPath,
         path: filePath,
-        stat: fs.statSync(fullPath)
+        contents: sbuff(contents)
       };
 
       self.deploy(self.appId, self.versionId, fileInfo, function(err) {
         assert.isTrue(self.settings.storage.writeStream.calledWith(sinon.match({
           path: self.appId + '/' + self.versionId + '/' + filePath,
-          size: contents.length,
           contents: sinon.match({
-            readable: true,
-            path: sinon.match(/\.html$/)
-          }),
-          gzipEncoded: false
+            _buffer: contents
+          })
         })));
 
         done();
@@ -70,22 +66,22 @@ describe('deploy', function() {
       if (err) return done(err);
 
       var fileInfo = {
-        fullPath: fullPath,
         path: filePath,
-        stat: fs.statSync(fullPath)
+        contents: sbuff(contents)
       };
 
       self.deploy(self.appId, self.versionId, fileInfo, function(err) {
+        debugger;
         assert.isTrue(self.settings.storage.writeStream.calledWith(sinon.match({
           path: self.appId + '/' + self.versionId + '/' + filePath,
           contents: sinon.match({
-            readable: true,
-            path: sinon.match(/\.js\.gz$/)
+            _buffer: sinon.match.object,
+            readable: true
           }),
           gzipEncoded: true
         })));
 
-        assert.isTrue(self.settings.storage.writeStream.getCall(0).args[0].size < contents.length);
+        // assert.isTrue(self.settings.storage.writeStream.getCall(0).args[0].size < contents.length);
 
         done();
       });
