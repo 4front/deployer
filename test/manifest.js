@@ -23,35 +23,30 @@ describe('manifest', function() {
       }]
     };
 
-    fs.writeFileSync(path.join(this.appDir, 'package.json'),
-      JSON.stringify({ "_virtualApp": manifestJson}));
+    var manifestString = JSON.stringify({ "_virtualApp": manifestJson});
 
-    manifest(this.appDir, function(err, json) {
+    manifest(manifestString, function(err, json) {
       assert.deepEqual(json, manifestJson);
       done();
     });
   });
 
   it('uses default manifest for missing package.json', function(done) {
-    manifest(this.appDir, function(err, json) {
+    manifest(null, function(err, json) {
       assert.deepEqual(json, manifest.defaultManifest);
       done();
     });
   });
 
   it('uses default manifest for malformed package.json', function(done) {
-    fs.writeFileSync(path.join(this.appDir, 'package.json'), 'not_really_json');
-
-    manifest(this.appDir, function(err, json) {
+    manifest('not_really_json', function(err, json) {
       assert.deepEqual(json, manifest.defaultManifest);
       done();
     });
   });
 
   it('uses default manifest for missing _virtualApp', function(done) {
-    fs.writeFileSync(path.join(this.appDir, 'package.json'), "{'name': 'foo'}");
-
-    manifest(this.appDir, function(err, json) {
+    manifest("{'name': 'foo'}", function(err, json) {
       assert.deepEqual(json, manifest.defaultManifest);
       done();
     });

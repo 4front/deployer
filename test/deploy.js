@@ -48,7 +48,7 @@ describe('deploy', function() {
         assert.isTrue(self.settings.storage.writeStream.calledWith(sinon.match({
           path: self.appId + '/' + self.versionId + '/' + filePath,
           contents: sinon.match({
-            _buffer: contents
+            readable: true
           })
         })));
 
@@ -101,7 +101,7 @@ describe('deploy', function() {
     self.deploy(self.appId, self.versionId, fileInfo, function(err) {
       assert.isTrue(self.settings.storage.writeStream.calledWith(sinon.match({
         path: self.appId + '/' + self.versionId + '/' + filePath,
-        contents: sinon.match({_buffer: contents})
+        contents: sinon.match({readable: true})
       })));
 
       done();

@@ -38,13 +38,27 @@ describe('bundle', function() {
 
   beforeEach(function() {
     self = this;
-    this.sampleArchivePath = path.join(os.tmpdir(), 'sample-app.zip');
+    this.sampleArchivePath = path.join(os.tmpdir(), 'sample-app.tar.gz');
     this.sampleArchive = fs.createWriteStream(this.sampleArchivePath);
 
     this.sampleFiles = ['index.html', 'js/app.js', 'css/app.css'];
 
     this.versionId = shortid.generate();
     this.appId = shortid.generate();
+
+    this.manifest = {
+      router: [{
+        module: 'test-plugin',
+        options: {
+          foo: 1
+        }
+      }]
+    };
+
+    this.packageJson = {
+      name: 'app-name',
+      _virtualApp: this.manifest
+    };
 
     this.context = {
       user: { userId: shortid.generate() },
@@ -75,6 +89,11 @@ describe('bundle', function() {
       logger: {
         info: function(){},
         error: function(){}
+      },
+      storage: {
+        readFile: sinon.spy(function(key, callback) {
+          callback(null, self.packageJson);
+        })
       }
     };
 
@@ -89,7 +108,7 @@ describe('bundle', function() {
     async.series([
       function(cb) {
         // Create the temp sample app archive
-        var archive = archiver.create('zip')
+        var archive = archiver.create('tar', {gzip: true})
           .directory(path.join(__dirname, './fixtures/sample-app'), 'sample-app')
           .finalize();
 
@@ -111,7 +130,7 @@ describe('bundle', function() {
             manifest: {}
           }), self.context);
 
-          assert.equal(self.mockDeploy.callCount, self.sampleFiles.length);
+          assert.equal(self.mockDeploy.callCount, self.sampleFiles.length + 1);
 
           self.sampleFiles.forEach(function(sampleFile) {
             assert.isTrue(self.mockDeploy.calledWith(self.appId, self.versionId, sinon.match({
@@ -119,13 +138,13 @@ describe('bundle', function() {
             })));
           });
 
-          // The package.json should not get deployed
-          assert.isFalse(self.mockDeploy.calledWith(self.appId, self.versionId, 'package.json'));
+          self.settings.storage.readFile.calledWith(
+            self.appId + '/' + self.versionId + '/package.json');
 
           self.mockVersions.updateStatus.calledWith(sinon.match({
             versionId: self.versionId,
             status: 'complete',
-            manifest: sinon.match({router: sinon.match.array})
+            manifest: self.manifest
           }), self.context);
 
           cb();
@@ -141,7 +160,7 @@ describe('bundle', function() {
       function(cb) {
         // Create the temp sample app archive. This time nest the files in an
         // additional "dist" directory.
-        var archive = archiver.create('zip')
+        var archive = archiver.create('tar', {gzip: true})
           .append(new Buffer('string'), { name: 'sample-app/ignore.html' })
           .directory(path.join(__dirname, './fixtures/sample-app'), 'sample-app/dist')
           .finalize();
@@ -178,7 +197,7 @@ describe('bundle', function() {
 
     async.series([
       function(cb) {
-        var archive = archiver.create('zip')
+        var archive = archiver.create('tar', {gzip: true})
           .directory(path.join(__dirname, './fixtures/sample-app'), 'sample-app')
           .finalize();
 
@@ -204,7 +223,7 @@ describe('bundle', function() {
   it('deploy empty archive', function(done) {
     async.series([
       function(cb) {
-        var archive = archiver.create('zip')
+        var archive = archiver.create('tar', {gzip: true})
           .finalize();
 
         archive.pipe(self.sampleArchive).on('close', cb);
