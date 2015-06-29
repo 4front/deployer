@@ -23,6 +23,10 @@ describe('deploy', function() {
         writeStream: sinon.spy(function(fileInfo, callback) {
           callback(null);
         })
+      },
+      logger: {
+        info: function(){},
+        error: function(){}
       }
     };
 

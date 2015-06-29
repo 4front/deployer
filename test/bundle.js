@@ -203,6 +203,7 @@ describe('bundle', function() {
       function(cb) {
         self.bundle.readStream = fs.createReadStream(self.sampleArchivePath);
         self.deployBundle(self.bundle, self.context, function(err, deployedVersion) {
+
           assert.ok(self.mockVersions.updateStatus.calledWith(sinon.match({
             appId: self.appId,
             versionId: self.versionId,
