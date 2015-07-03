@@ -68,7 +68,6 @@ describe('bundle', function() {
 
     this.bundle = {
       appId: this.appId,
-      stream: self.sampleArchive,
       message: 'commit message'
     };
 
@@ -119,7 +118,9 @@ describe('bundle', function() {
         });
       },
       function(cb) {
-        self.bundle.readStream = fs.createReadStream(self.sampleArchivePath);
+        self.bundle.readStream = function() {
+          return fs.createReadStream(self.sampleArchivePath);
+        };
 
         self.deployBundle(self.bundle, self.context, function(err, deployedVersion) {
           if (err) return cb(err);
@@ -171,7 +172,9 @@ describe('bundle', function() {
         });
       },
       function(cb) {
-        self.bundle.readStream = fs.createReadStream(self.sampleArchivePath);
+        self.bundle.readStream = function() {
+          return fs.createReadStream(self.sampleArchivePath);
+        }
 
         self.deployBundle(self.bundle, self.context, function(err, deployedVersion) {
           if (err) return cb(err);
@@ -201,7 +204,10 @@ describe('bundle', function() {
         archive.pipe(self.sampleArchive).on('close', cb);
       },
       function(cb) {
-        self.bundle.readStream = fs.createReadStream(self.sampleArchivePath);
+        self.bundle.readStream = function() {
+          return fs.createReadStream(self.sampleArchivePath);
+        }
+
         self.deployBundle(self.bundle, self.context, function(err, deployedVersion) {
 
           assert.ok(self.mockVersions.updateStatus.calledWith(sinon.match({
