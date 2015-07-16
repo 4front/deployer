@@ -113,7 +113,14 @@ describe('version', function() {
 
       var versionData = {
         versionId: shortid.generate(),
-        status: 'complete'
+        status: 'complete',
+        manifest: {
+          router: [
+            {
+              module: 'webpage'
+            }
+          ]
+        }
       };
 
       this.versions.updateStatus(versionData, this.context, {}, function(err, version) {
@@ -122,7 +129,8 @@ describe('version', function() {
         assert.isTrue(self.settings.database.updateVersion.calledWith(sinon.match({
           appId: self.appId,
           versionId: versionData.versionId,
-          status: 'complete'
+          status: 'complete',
+          manifest: versionData.manifest
         })));
 
         assert.isTrue(self.settings.database.updateTrafficRules.calledWith(
