@@ -87,7 +87,8 @@ describe('bundle', function() {
     this.settings = {
       logger: {
         info: function(){},
-        error: function(){}
+        error: function(){},
+        debug: function(){}
       },
       storage: {
         readFile: sinon.spy(function(key, callback) {

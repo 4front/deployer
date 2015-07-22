@@ -26,7 +26,8 @@ describe('deploy', function() {
       },
       logger: {
         info: function(){},
-        error: function(){}
+        error: function(){},
+        debug: function(){}
       }
     };
 
