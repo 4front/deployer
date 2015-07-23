@@ -88,7 +88,8 @@ describe('bundle', function() {
       logger: {
         info: function(){},
         error: function(){},
-        debug: function(){}
+        debug: function(){},
+        warn: function(){}
       },
       storage: {
         readFile: sinon.spy(function(key, callback) {
