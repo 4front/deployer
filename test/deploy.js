@@ -2,7 +2,7 @@ var _ = require('lodash');
 var async = require('async');
 var fs = require('fs');
 var path = require('path');
-var shortid = require('shortid');
+var uid = require('uid-safe');
 var rimraf = require('rimraf');
 var os = require('os');
 var sinon = require('sinon');
@@ -18,21 +18,21 @@ describe('deploy', function() {
   beforeEach(function() {
     self = this;
 
-    this.settings= {
+    this.settings = {
       storage: {
         writeStream: sinon.spy(function(fileInfo, callback) {
           callback(null);
         })
       },
       logger: {
-        info: function(){},
-        error: function(){},
-        debug: function(){}
+        info: function() {},
+        error: function() {},
+        debug: function() {}
       }
     };
 
-    this.appId = shortid.generate();
-    this.versionId = shortid.generate();
+    this.appId = uid.sync(10);
+    this.versionId = uid.sync(10);
     this.deploy = require('../lib/deploy')(this.settings);
   });
 
@@ -49,7 +49,7 @@ describe('deploy', function() {
         contents: sbuff(contents)
       };
 
-      self.deploy(self.appId, self.versionId, fileInfo, function(err) {
+      self.deploy(self.appId, self.versionId, fileInfo, function(deployErr) {
         assert.isTrue(self.settings.storage.writeStream.calledWith(sinon.match({
           path: self.appId + '/' + self.versionId + '/' + filePath,
           contents: sinon.match({
@@ -75,8 +75,7 @@ describe('deploy', function() {
         contents: sbuff(contents)
       };
 
-      self.deploy(self.appId, self.versionId, fileInfo, function(err) {
-        debugger;
+      self.deploy(self.appId, self.versionId, fileInfo, function(deployErr) {
         assert.isTrue(self.settings.storage.writeStream.calledWith(sinon.match({
           path: self.appId + '/' + self.versionId + '/' + filePath,
           contents: sinon.match({

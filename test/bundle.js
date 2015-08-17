@@ -2,7 +2,7 @@ var _ = require('lodash');
 var async = require('async');
 var fs = require('fs');
 var path = require('path');
-var shortid = require('shortid');
+var uid = require('uid-safe');
 var rimraf = require('rimraf');
 var archiver = require('archiver');
 var mockery = require('mockery');
@@ -43,8 +43,8 @@ describe('bundle', function() {
 
     this.sampleFiles = ['index.html', 'js/app.js', 'css/app.css'];
 
-    this.versionId = shortid.generate();
-    this.appId = shortid.generate();
+    this.versionId = uid.sync(10);
+    this.appId = uid.sync(10);
 
     this.manifest = {
       router: [{
@@ -61,9 +61,9 @@ describe('bundle', function() {
     };
 
     this.context = {
-      user: { userId: shortid.generate() },
+      user: { userId: uid.sync(10) },
       virtualApp: {appId: this.appId},
-      organization: {orgId: shortid.generate()}
+      organization: {orgId: uid.sync(10)}
     };
 
     this.bundle = {
@@ -89,10 +89,10 @@ describe('bundle', function() {
 
     this.settings = {
       logger: {
-        info: function(){},
-        error: function(){},
-        debug: function(){},
-        warn: function(){}
+        info: function() {},
+        error: function() {},
+        debug: function() {},
+        warn: function() {}
       },
       storage: {
         readFile: sinon.spy(function(key, callback) {
@@ -240,12 +240,12 @@ describe('bundle', function() {
     async.series([
       function(cb) {
         // Make index.html already existing
-        self.settings.storage.listFiles = sinon.spy(function(prefix, cb) {
-          cb(null, [self.appId + '/' + self.versionId + '/index.html']);
+        self.settings.storage.listFiles = sinon.spy(function(prefix, _cb) {
+          _cb(null, [self.appId + '/' + self.versionId + '/index.html']);
         });
 
         var tarball = archiver.create('tar', {gzip: true})
-          .append('<html/>', { name:'root/index.html' })
+          .append('<html/>', { name: 'root/index.html' })
           .append('function(){}', {name: 'root/scripts/main.js'})
           .append('body{}', {name: 'root/styles/main.css'})
           .finalize();
@@ -308,7 +308,7 @@ describe('bundle', function() {
     async.series([
       function(cb) {
         var tarball = archiver.create('tar', {gzip: true})
-          .append('<html/>', { name:'root/index.html' })
+          .append('<html/>', { name: 'root/index.html' })
           .append('function(){}', {name: 'root/scripts/main.js'})
           .append('body{}', {name: 'root/styles/main.css'})
           .finalize();

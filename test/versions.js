@@ -1,7 +1,7 @@
 var assert = require('assert');
 var _ = require('lodash');
 var sinon = require('sinon');
-var shortid = require('shortid');
+var uid = require('uid-safe');
 
 require('dash-assert');
 
@@ -34,9 +34,9 @@ describe('version', function() {
         })
       },
       logger: {
-        info: function(){},
-        warn: function(){},
-        debug: function(){}
+        info: function() {},
+        warn: function() {},
+        debug: function() {}
       },
       virtualAppRegistry: {
         flushApp: sinon.spy(function(app) {})
@@ -48,8 +48,8 @@ describe('version', function() {
       }
     };
 
-    this.userId = shortid.generate();
-    this.appId = shortid.generate();
+    this.userId = uid.sync(10);
+    this.appId = uid.sync(10);
     this.nextVersionNum = 1;
 
     this.context = {
@@ -61,7 +61,7 @@ describe('version', function() {
         url: 'http://app.apphost.com'
       },
       organization: {
-        orgId: shortid.generate(),
+        orgId: uid.sync(10),
         environments: ['production']
       }
     };
@@ -114,7 +114,7 @@ describe('version', function() {
       var options = {forceAllTrafficToNewVersion: true};
 
       var versionData = {
-        versionId: shortid.generate(),
+        versionId: uid.sync(10),
         status: 'complete',
         manifest: {
           router: [
@@ -152,7 +152,7 @@ describe('version', function() {
       self.context.virtualApp.trafficControlEnabled = true;
       var options = {forceAllTrafficToNewVersion: false};
       var versionData = {
-        versionId: shortid.generate(),
+        versionId: uid.sync(10),
         status: 'complete'
       };
 
@@ -173,7 +173,7 @@ describe('version', function() {
 
     it('version status updated to failed', function(done) {
       var versionData = {
-        versionId: shortid.generate(),
+        versionId: uid.sync(10),
         status: 'failed',
         error: 'Version failed to deploy'
       };
@@ -197,11 +197,11 @@ describe('version', function() {
       this.context.organization.environments = [];
 
       var versionData = {
-        versionId: shortid.generate(),
+        versionId: uid.sync(10),
         status: 'complete'
       };
 
-      this.versions.updateStatus(shortid.generate(), this.context, null, function(err, version) {
+      this.versions.updateStatus(uid.sync(10), this.context, null, function(err, version) {
         assert.isFalse(self.settings.database.updateTrafficRules.called);
         done();
       });
@@ -209,7 +209,7 @@ describe('version', function() {
   });
 
   it('delete version', function(done) {
-    var versionId = shortid.generate();
+    var versionId = uid.sync(10);
 
     this.versions.delete(versionId, this.context, function(err) {
       assert.isTrue(self.settings.database.getVersion.calledWith(self.context.virtualApp.appId, versionId));

@@ -1,7 +1,7 @@
 var assert = require('assert');
 var _ = require('lodash');
 var sinon = require('sinon');
-var shortid = require('shortid');
+var uid = require('uid-safe');
 var zlib = require('zlib');
 var sbuff = require('simple-bufferstream');
 var through = require('through2');
@@ -30,8 +30,8 @@ describe('version', function() {
     this.metadata = {};
     this.serve = require('../lib/serve')(this.settings);
 
-    this.appId = shortid.generate();
-    this.versionId = shortid.generate();
+    this.appId = uid.sync(10);
+    this.versionId = uid.sync(10);
 
     this.output = '';
 
