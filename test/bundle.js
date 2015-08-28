@@ -240,9 +240,11 @@ describe('bundle', function() {
     async.series([
       function(cb) {
         // Make index.html already existing
-        self.settings.storage.listFiles = sinon.spy(function(prefix, _cb) {
-          _cb(null, [self.appId + '/' + self.versionId + '/index.html']);
-        });
+        // self.settings.storage.listFiles = sinon.spy(function(prefix, _cb) {
+        //   _cb(null, [self.appId + '/' + self.versionId + '/index.html']);
+        // });
+
+        self.bundle.lastDeployAttempt = 'scripts/main.js';
 
         var tarball = archiver.create('tar', {gzip: true})
           .append('<html/>', { name: 'root/index.html' })
@@ -264,8 +266,6 @@ describe('bundle', function() {
           if (err) return cb(err);
 
           assert.isTrue(self.settings.database.getVersion.calledWith(self.versionId));
-
-          assert.isTrue(self.settings.storage.listFiles.calledWith(self.appId + '/' + self.versionId));
           assert.equal(2, self.mockDeploy.callCount);
 
           assert.isTrue(self.mockDeploy.calledWith(self.appId, self.versionId, sinon.match({
@@ -336,6 +336,7 @@ describe('bundle', function() {
             path: 'styles/main.css'
           })));
 
+          assert.equal(deployedVersion.lastDeployAttempt, 'styles/main.css');
           assert.equal(deployedVersion.status, 'initiated');
           assert.isFalse(self.mockVersions.updateStatus.called);
           cb();
