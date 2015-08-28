@@ -100,10 +100,10 @@ describe('bundle', function() {
         })
       },
       database: {
-        getVersion: sinon.spy(function(versionId, cb) {
+        getVersion: sinon.spy(function(appId, versionId, cb) {
           cb(null, {
             versionId: versionId,
-            appId: self.appId
+            appId: appId
           });
         })
       }
@@ -265,7 +265,7 @@ describe('bundle', function() {
         self.deployBundle(self.bundle, self.context, function(err, deployedVersion) {
           if (err) return cb(err);
 
-          assert.isTrue(self.settings.database.getVersion.calledWith(self.versionId));
+          assert.isTrue(self.settings.database.getVersion.calledWith(self.appId, self.versionId));
           assert.equal(2, self.mockDeploy.callCount);
 
           assert.isTrue(self.mockDeploy.calledWith(self.appId, self.versionId, sinon.match({
