@@ -237,13 +237,20 @@ describe('bundle', function() {
   it('continues deployment of existing version', function(done) {
     self.bundle.versionId = self.versionId;
 
+    this.settings.database.getVersion = sinon.spy(function(appId, versionId, cb) {
+      cb(null, {
+        versionId: versionId,
+        appId: appId,
+        deploymentParts: [{
+          partNumber: 1,
+          lastFile: 'scripts/main.js'
+        }]
+      })
+    });
+
     async.series([
       function(cb) {
-        // Make index.html already existing
-        // self.settings.storage.listFiles = sinon.spy(function(prefix, _cb) {
-        //   _cb(null, [self.appId + '/' + self.versionId + '/index.html']);
-        // });
-
+        self.bundle.partNumber = 2;
         self.bundle.lastDeployAttempt = 'scripts/main.js';
 
         var tarball = archiver.create('tar', {gzip: true})
@@ -336,9 +343,19 @@ describe('bundle', function() {
             path: 'styles/main.css'
           })));
 
-          assert.equal(deployedVersion.lastDeployAttempt, 'styles/main.css');
+          assert.equal(self.bundle.lastDeployAttempt, 'styles/main.css');
           assert.equal(deployedVersion.status, 'initiated');
-          assert.isFalse(self.mockVersions.updateStatus.called);
+          assert.isTrue(self.mockVersions.updateStatus.called);
+
+          var updateStatusArgs = self.mockVersions.updateStatus.getCall(0).args[0];
+          assert.equal(1, updateStatusArgs.deploymentParts.length);
+
+          assert.isMatch(updateStatusArgs.deploymentParts[0], {
+            partNumber: 1,
+            lastFile: 'styles/main.css',
+            fileCount: 2
+          });
+
           cb();
         });
       }
