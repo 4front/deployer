@@ -234,75 +234,75 @@ describe('bundle', function() {
     ], done);
   });
 
-  it('continues deployment of existing version', function(done) {
-    self.bundle.versionId = self.versionId;
+  // it('continues deployment of existing version', function(done) {
+  //   self.bundle.versionId = self.versionId;
+  //
+  //   this.settings.database.getVersion = sinon.spy(function(appId, versionId, cb) {
+  //     cb(null, {
+  //       versionId: versionId,
+  //       appId: appId,
+  //       deploymentParts: [{
+  //         partNumber: 1,
+  //         lastFile: 'scripts/main.js'
+  //       }]
+  //     })
+  //   });
+  //
+  //   async.series([
+  //     function(cb) {
+  //       self.bundle.partNumber = 2;
+  //       self.bundle.lastDeployAttempt = 'scripts/main.js';
+  //
+  //       var tarball = archiver.create('tar', {gzip: true})
+  //         .append('<html/>', { name: 'root/index.html' })
+  //         .append('function(){}', {name: 'root/scripts/main.js'})
+  //         .append('body{}', {name: 'root/styles/main.css'})
+  //         .finalize();
+  //
+  //       tarball.pipe(self.sampleArchive);
+  //       self.sampleArchive.on('close', function() {
+  //         cb();
+  //       });
+  //     },
+  //     function(cb) {
+  //       self.bundle.readStream = function() {
+  //         return fs.createReadStream(self.sampleArchivePath);
+  //       };
+  //
+  //       self.deployBundle(self.bundle, self.context, function(err, deployedVersion) {
+  //         if (err) return cb(err);
+  //
+  //         assert.isTrue(self.settings.database.getVersion.calledWith(self.appId, self.versionId));
+  //         assert.equal(2, self.mockDeploy.callCount);
+  //
+  //         assert.isTrue(self.mockDeploy.calledWith(self.appId, self.versionId, sinon.match({
+  //           path: 'scripts/main.js'
+  //         })));
+  //
+  //         assert.isTrue(self.mockDeploy.calledWith(self.appId, self.versionId, sinon.match({
+  //           path: 'styles/main.css'
+  //         })));
+  //
+  //         // index.html should not have been deployed because it's already in storage
+  //         assert.isFalse(self.mockDeploy.calledWith(self.appId, self.versionId, sinon.match({
+  //           path: 'index.html'
+  //         })));
+  //
+  //         assert.isTrue(self.mockVersions.updateStatus.called);
+  //
+  //         assert.ok(self.mockVersions.updateStatus.calledWith(sinon.match({
+  //           appId: self.appId,
+  //           versionId: self.versionId,
+  //           status: 'complete'
+  //         })));
+  //
+  //         cb();
+  //       });
+  //     }
+  //   ], done);
+  // });
 
-    this.settings.database.getVersion = sinon.spy(function(appId, versionId, cb) {
-      cb(null, {
-        versionId: versionId,
-        appId: appId,
-        deploymentParts: [{
-          partNumber: 1,
-          lastFile: 'scripts/main.js'
-        }]
-      })
-    });
-
-    async.series([
-      function(cb) {
-        self.bundle.partNumber = 2;
-        self.bundle.lastDeployAttempt = 'scripts/main.js';
-
-        var tarball = archiver.create('tar', {gzip: true})
-          .append('<html/>', { name: 'root/index.html' })
-          .append('function(){}', {name: 'root/scripts/main.js'})
-          .append('body{}', {name: 'root/styles/main.css'})
-          .finalize();
-
-        tarball.pipe(self.sampleArchive);
-        self.sampleArchive.on('close', function() {
-          cb();
-        });
-      },
-      function(cb) {
-        self.bundle.readStream = function() {
-          return fs.createReadStream(self.sampleArchivePath);
-        };
-
-        self.deployBundle(self.bundle, self.context, function(err, deployedVersion) {
-          if (err) return cb(err);
-
-          assert.isTrue(self.settings.database.getVersion.calledWith(self.appId, self.versionId));
-          assert.equal(2, self.mockDeploy.callCount);
-
-          assert.isTrue(self.mockDeploy.calledWith(self.appId, self.versionId, sinon.match({
-            path: 'scripts/main.js'
-          })));
-
-          assert.isTrue(self.mockDeploy.calledWith(self.appId, self.versionId, sinon.match({
-            path: 'styles/main.css'
-          })));
-
-          // index.html should not have been deployed because it's already in storage
-          assert.isFalse(self.mockDeploy.calledWith(self.appId, self.versionId, sinon.match({
-            path: 'index.html'
-          })));
-
-          assert.isTrue(self.mockVersions.updateStatus.called);
-
-          assert.ok(self.mockVersions.updateStatus.calledWith(sinon.match({
-            appId: self.appId,
-            versionId: self.versionId,
-            status: 'complete'
-          })));
-
-          cb();
-        });
-      }
-    ], done);
-  });
-
-  it('stops the deployment before the end of tar stream', function(done) {
+  it('deployment times out', function(done) {
     _.extend(self.bundle, {
       shouldStop: function(entry) {
         return entry.path === 'styles/main.css';
@@ -343,18 +343,8 @@ describe('bundle', function() {
             path: 'styles/main.css'
           })));
 
-          assert.equal(self.bundle.lastDeployAttempt, 'styles/main.css');
-          assert.equal(deployedVersion.status, 'initiated');
-          assert.isTrue(self.mockVersions.updateStatus.called);
-
-          var updateStatusArgs = self.mockVersions.updateStatus.getCall(0).args[0];
-          assert.equal(1, updateStatusArgs.deploymentParts.length);
-
-          assert.isMatch(updateStatusArgs.deploymentParts[0], {
-            partNumber: 1,
-            lastFile: 'styles/main.css',
-            fileCount: 2
-          });
+          assert.equal(deployedVersion.status, 'timedOut');
+          assert.equal(deployedVersion.fileCount, 2);
 
           cb();
         });
