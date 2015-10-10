@@ -1,8 +1,6 @@
 var assert = require('assert');
-var _ = require('lodash');
 var sinon = require('sinon');
 var uid = require('uid-safe');
-var zlib = require('zlib');
 var sbuff = require('simple-bufferstream');
 var through = require('through2');
 
@@ -17,7 +15,7 @@ describe('version', function() {
 
     this.settings = {
       storage: {
-        readFileStream: sinon.spy(function(storagePath) {
+        readFileStream: sinon.spy(function() {
           return sbuff(self.contents);
         }),
         getMetadata: sinon.spy(function(storagePath, callback) {
@@ -41,7 +39,7 @@ describe('version', function() {
       cb();
     });
 
-    this.res.set = sinon.spy(function(header, value) {});
+    this.res.set = sinon.spy(function() {});
   });
 
   it('serves file', function(done) {
@@ -51,7 +49,7 @@ describe('version', function() {
       ContentType: 'text/html'
     };
 
-    this.contents = "<html></html>";
+    this.contents = '<html></html>';
 
     this.res.on('finish', function() {
       assert.equal(self.output, self.contents);
@@ -82,7 +80,7 @@ describe('version', function() {
       done();
     });
 
-    this.contents = "made_up_gzip_content";
+    this.contents = 'made_up_gzip_content';
     this.serve(this.appId, this.versionId, filePath, this.res);
   });
 
@@ -94,7 +92,7 @@ describe('version', function() {
       CacheControl: 'private'
     };
 
-    this.contents = "<html></html>";
+    this.contents = '<html></html>';
 
     this.res.on('finish', function() {
       assert.isTrue(self.res.set.calledWith(

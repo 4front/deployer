@@ -1,9 +1,5 @@
-var _ = require('lodash');
-var async = require('async');
-var fs = require('fs');
 var path = require('path');
 var uid = require('uid-safe');
-var rimraf = require('rimraf');
 var os = require('os');
 var sinon = require('sinon');
 var assert = require('assert');
@@ -39,7 +35,7 @@ describe('deploy', function() {
   it('deploy non gizpped file', function(done) {
     var filePath = 'views/' + Date.now() + '.html';
     var fullPath = path.join(os.tmpdir(), filePath);
-    var contents = "<html></html>";
+    var contents = '<html></html>';
 
     writefile(fullPath, contents, function(err) {
       if (err) return done(err);
@@ -49,7 +45,7 @@ describe('deploy', function() {
         contents: sbuff(contents)
       };
 
-      self.deploy(self.appId, self.versionId, fileInfo, function(deployErr) {
+      self.deploy(self.appId, self.versionId, fileInfo, function() {
         assert.isTrue(self.settings.storage.writeStream.calledWith(sinon.match({
           path: self.appId + '/' + self.versionId + '/' + filePath,
           contents: sinon.match({
@@ -65,7 +61,7 @@ describe('deploy', function() {
   it('deploy gzipped file', function(done) {
     var filePath = 'js/' + Date.now() + '.js';
     var fullPath = path.join(os.tmpdir(), filePath);
-    var contents = "function(){asdlfkjasdfkalsdjfakldfgjslkdfgjskldfjgklsdjfgklsdjklasjdlk asdkfasldkfhasdfh}";
+    var contents = 'function(){asdlfkjasdfkalsdjfakldfgjslkdfgjskldfjgklsdjfgklsdjklasjdlk asdkfasldkfhasdfh}';
 
     writefile(fullPath, contents, function(err) {
       if (err) return done(err);
@@ -75,7 +71,7 @@ describe('deploy', function() {
         contents: sbuff(contents)
       };
 
-      self.deploy(self.appId, self.versionId, fileInfo, function(deployErr) {
+      self.deploy(self.appId, self.versionId, fileInfo, function() {
         assert.isTrue(self.settings.storage.writeStream.calledWith(sinon.match({
           path: self.appId + '/' + self.versionId + '/' + filePath,
           contents: sinon.match({
@@ -94,7 +90,7 @@ describe('deploy', function() {
 
   it('deploy stream', function(done) {
     var filePath = Date.now() + '.html';
-    var contents = "<html><div></div></html>";
+    var contents = '<html><div></div></html>';
 
     var fileInfo = {
       path: filePath,
@@ -103,6 +99,8 @@ describe('deploy', function() {
     };
 
     self.deploy(self.appId, self.versionId, fileInfo, function(err) {
+      if (err) return done(err);
+
       assert.isTrue(self.settings.storage.writeStream.calledWith(sinon.match({
         path: self.appId + '/' + self.versionId + '/' + filePath,
         contents: sinon.match({readable: true})

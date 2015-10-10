@@ -41,7 +41,8 @@
   "devDependencies": {
     "archiver": "^0.14.3",
     "dash-assert": "^1.0.2",
-    "eslint": "^1.1.0",
+    "eslint": "^1.6.0",
+    "eslint-config-4front": "4front/eslint-config-4front",
     "istanbul": "^0.3.14",
     "mocha": "^2.2.4",
     "mockery": "^1.4.0",

@@ -22,11 +22,11 @@ describe('bundle', function() {
     this.mockDeploy = {};
 
     mockery.enable({warnOnUnregistered: false});
-    mockery.registerMock('./versions', function(settings) {
+    mockery.registerMock('./versions', function() {
       return self.mockVersions;
     });
 
-    mockery.registerMock('./deploy', function(settings) {
+    mockery.registerMock('./deploy', function() {
       return self.mockDeploy;
     });
   });
@@ -135,7 +135,7 @@ describe('bundle', function() {
           return fs.createReadStream(self.sampleArchivePath);
         };
 
-        self.deployBundle(self.bundle, self.context, function(err, deployedVersion) {
+        self.deployBundle(self.bundle, self.context, function(err) {
           if (err) return cb(err);
 
           self.mockVersions.create.calledWith(sinon.match({
@@ -187,9 +187,50 @@ describe('bundle', function() {
       function(cb) {
         self.bundle.readStream = function() {
           return fs.createReadStream(self.sampleArchivePath);
-        }
+        };
 
-        self.deployBundle(self.bundle, self.context, function(err, deployedVersion) {
+        self.deployBundle(self.bundle, self.context, function(err) {
+          if (err) return cb(err);
+
+          assert.isFalse(self.mockDeploy.calledWith(self.appId, self.versionId, sinon.match({
+            path: 'ignore.html'
+          })));
+
+          self.sampleFiles.forEach(function(sampleFile) {
+            assert.isTrue(self.mockDeploy.calledWith(self.appId, self.versionId, sinon.match({
+              path: sampleFile
+            })));
+          });
+
+          cb();
+        });
+      }
+    ], done);
+  });
+
+  it('deploy archive in deeper nested subfolder', function(done) {
+    this.bundle.deployDirectory = '/FE/public';
+
+    async.series([
+      function(cb) {
+        // Create the temp sample app archive. This time nest the files in an
+        // additional "dist" directory.
+        var archive = archiver.create('tar', {gzip: true})
+          .append(new Buffer('string'), { name: 'sample-app/ignore.html' })
+          .directory(path.join(__dirname, './fixtures/sample-app'), 'sample-app/FE/public')
+          .finalize();
+
+        archive.pipe(self.sampleArchive);
+        self.sampleArchive.on('close', function() {
+          cb();
+        });
+      },
+      function(cb) {
+        self.bundle.readStream = function() {
+          return fs.createReadStream(self.sampleArchivePath);
+        };
+
+        self.deployBundle(self.bundle, self.context, function(err) {
           if (err) return cb(err);
 
           assert.isFalse(self.mockDeploy.calledWith(self.appId, self.versionId, sinon.match({
@@ -217,7 +258,7 @@ describe('bundle', function() {
       function(cb) {
         self.bundle.readStream = function() {
           return fs.createReadStream(self.sampleArchivePath);
-        }
+        };
 
         self.deployBundle(self.bundle, self.context, function(err, deployedVersion) {
           assert.ok(self.mockVersions.updateStatus.calledWith(sinon.match({

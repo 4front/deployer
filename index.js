@@ -2,11 +2,9 @@ var _ = require('lodash');
 var debug = require('debug')('4front:deployer');
 
 module.exports = function(settings) {
-  if (!settings.database)
-    throw new Error("Missing database option");
+  if (!settings.database) throw new Error('Missing database option');
 
-  if (!settings.storage)
-    throw new Error("Missing storage option");
+  if (!settings.storage) throw new Error('Missing storage option');
 
   _.defaults(settings, {
     defaultMaxAge: 30 * 60 * 30

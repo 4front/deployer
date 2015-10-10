@@ -18,12 +18,12 @@ describe('manifest', function() {
   it('loads from package.json', function(done) {
     var manifestJson = {
       router: [{
-        module: "webpage",
+        module: 'webpage',
         options: {setting: 1}
       }]
     };
 
-    var manifestString = JSON.stringify({ "_virtualApp": manifestJson});
+    var manifestString = JSON.stringify({ '_virtualApp': manifestJson});
 
     manifest(manifestString, function(err, json) {
       assert.deepEqual(json, manifestJson);
