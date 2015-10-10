@@ -216,7 +216,7 @@ describe('bundle', function() {
         // Create the temp sample app archive. This time nest the files in an
         // additional "dist" directory.
         var archive = archiver.create('tar', {gzip: true})
-          .append(new Buffer('string'), { name: 'sample-app/ignore.html' })
+          .append(new Buffer('string'), { name: 'sample-app/BE/ignore.html' })
           .directory(path.join(__dirname, './fixtures/sample-app'), 'sample-app/FE/public')
           .finalize();
 
@@ -233,8 +233,8 @@ describe('bundle', function() {
         self.deployBundle(self.bundle, self.context, function(err) {
           if (err) return cb(err);
 
-          assert.isFalse(self.mockDeploy.calledWith(self.appId, self.versionId, sinon.match({
-            path: 'ignore.html'
+          assert.isFalse(self.mockDeploy.calledWith(sinon.match.any, sinon.match.any, sinon.match({
+            path: sinon.match(/ignore\.html/)
           })));
 
           self.sampleFiles.forEach(function(sampleFile) {
@@ -274,74 +274,6 @@ describe('bundle', function() {
       }
     ], done);
   });
-
-  // it('continues deployment of existing version', function(done) {
-  //   self.bundle.versionId = self.versionId;
-  //
-  //   this.settings.database.getVersion = sinon.spy(function(appId, versionId, cb) {
-  //     cb(null, {
-  //       versionId: versionId,
-  //       appId: appId,
-  //       deploymentParts: [{
-  //         partNumber: 1,
-  //         lastFile: 'scripts/main.js'
-  //       }]
-  //     })
-  //   });
-  //
-  //   async.series([
-  //     function(cb) {
-  //       self.bundle.partNumber = 2;
-  //       self.bundle.lastDeployAttempt = 'scripts/main.js';
-  //
-  //       var tarball = archiver.create('tar', {gzip: true})
-  //         .append('<html/>', { name: 'root/index.html' })
-  //         .append('function(){}', {name: 'root/scripts/main.js'})
-  //         .append('body{}', {name: 'root/styles/main.css'})
-  //         .finalize();
-  //
-  //       tarball.pipe(self.sampleArchive);
-  //       self.sampleArchive.on('close', function() {
-  //         cb();
-  //       });
-  //     },
-  //     function(cb) {
-  //       self.bundle.readStream = function() {
-  //         return fs.createReadStream(self.sampleArchivePath);
-  //       };
-  //
-  //       self.deployBundle(self.bundle, self.context, function(err, deployedVersion) {
-  //         if (err) return cb(err);
-  //
-  //         assert.isTrue(self.settings.database.getVersion.calledWith(self.appId, self.versionId));
-  //         assert.equal(2, self.mockDeploy.callCount);
-  //
-  //         assert.isTrue(self.mockDeploy.calledWith(self.appId, self.versionId, sinon.match({
-  //           path: 'scripts/main.js'
-  //         })));
-  //
-  //         assert.isTrue(self.mockDeploy.calledWith(self.appId, self.versionId, sinon.match({
-  //           path: 'styles/main.css'
-  //         })));
-  //
-  //         // index.html should not have been deployed because it's already in storage
-  //         assert.isFalse(self.mockDeploy.calledWith(self.appId, self.versionId, sinon.match({
-  //           path: 'index.html'
-  //         })));
-  //
-  //         assert.isTrue(self.mockVersions.updateStatus.called);
-  //
-  //         assert.ok(self.mockVersions.updateStatus.calledWith(sinon.match({
-  //           appId: self.appId,
-  //           versionId: self.versionId,
-  //           status: 'complete'
-  //         })));
-  //
-  //         cb();
-  //       });
-  //     }
-  //   ], done);
-  // });
 
   it('deployment times out', function(done) {
     _.extend(self.bundle, {
