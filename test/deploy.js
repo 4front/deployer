@@ -3,6 +3,7 @@ var uid = require('uid-safe');
 var os = require('os');
 var sinon = require('sinon');
 var assert = require('assert');
+var isStream = require('is-stream');
 var sbuff = require('simple-bufferstream');
 var writefile = require('writefile');
 
@@ -74,14 +75,11 @@ describe('deploy', function() {
       self.deploy(self.appId, self.versionId, fileInfo, function() {
         assert.isTrue(self.settings.storage.writeStream.calledWith(sinon.match({
           path: self.appId + '/' + self.versionId + '/' + filePath,
-          contents: sinon.match({
-            _buffer: sinon.match.object,
-            readable: true
+          contents: sinon.match(function(obj) {
+            return isStream(obj);
           }),
           gzipEncoded: true
         })));
-
-        // assert.isTrue(self.settings.storage.writeStream.getCall(0).args[0].size < contents.length);
 
         done();
       });
