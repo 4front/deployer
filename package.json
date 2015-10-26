@@ -50,6 +50,7 @@
     "mocha": "^2.2.4",
     "mockery": "^1.4.0",
     "rimraf": "^2.4.0",
+    "shortid": "^2.2.4",
     "simple-bufferstream": "^1.0.0",
     "sinon": "^1.14.1",
     "writefile": "^0.2.8"
