@@ -3,8 +3,10 @@ var uid = require('uid-safe');
 var os = require('os');
 var sinon = require('sinon');
 var assert = require('assert');
+var isStream = require('is-stream');
 var sbuff = require('simple-bufferstream');
 var writefile = require('writefile');
+var shortid = require('shortid');
 
 require('dash-assert');
 
@@ -58,7 +60,7 @@ describe('deploy', function() {
     });
   });
 
-  it('deploy gzipped file', function(done) {
+  it('deploy compressible file', function(done) {
     var filePath = 'js/' + Date.now() + '.js';
     var fullPath = path.join(os.tmpdir(), filePath);
     var contents = 'function(){asdlfkjasdfkalsdjfakldfgjslkdfgjskldfjgklsdjfgklsdjklasjdlk asdkfasldkfhasdfh}';
@@ -74,22 +76,19 @@ describe('deploy', function() {
       self.deploy(self.appId, self.versionId, fileInfo, function() {
         assert.isTrue(self.settings.storage.writeStream.calledWith(sinon.match({
           path: self.appId + '/' + self.versionId + '/' + filePath,
-          contents: sinon.match({
-            _buffer: sinon.match.object,
-            readable: true
+          contents: sinon.match(function(obj) {
+            return isStream(obj);
           }),
           gzipEncoded: true
         })));
-
-        // assert.isTrue(self.settings.storage.writeStream.getCall(0).args[0].size < contents.length);
 
         done();
       });
     });
   });
 
-  it('deploy stream', function(done) {
-    var filePath = Date.now() + '.html';
+  it('deploy html stream', function(done) {
+    var filePath = shortid.generate() + '.html';
     var contents = '<html><div></div></html>';
 
     var fileInfo = {
@@ -103,7 +102,10 @@ describe('deploy', function() {
 
       assert.isTrue(self.settings.storage.writeStream.calledWith(sinon.match({
         path: self.appId + '/' + self.versionId + '/' + filePath,
-        contents: sinon.match({readable: true})
+        contents: sinon.match(function(obj) {
+          return isStream(obj);
+        }),
+        gzipEncoded: false
       })));
 
       done();

@@ -40,6 +40,15 @@ describe('version', function() {
     });
 
     this.res.set = sinon.spy(function() {});
+
+    this.res.status = function(statusCode) {
+      self.res.statusCode = statusCode;
+      return self.res;
+    };
+
+    this.res.send = sinon.spy(function(contents) {
+      sbuff(contents).pipe(self.res);
+    });
   });
 
   it('serves file', function(done) {
@@ -102,5 +111,36 @@ describe('version', function() {
     });
 
     this.serve(this.appId, this.versionId, filePath, this.res);
+  });
+
+  describe('not found', function() {
+    beforeEach(function() {
+      this.filePath = 'pages/missing.html';
+
+      // Return null metadata indicating the file is not found.
+      this.settings.storage.getMetadata = function(storagePath, callback) {
+        callback(null, null);
+      };
+    });
+
+    it('sets res status to 404 for missing file', function(done) {
+      this.serve(this.appId, this.versionId, this.filePath, this.res);
+      this.res.on('finish', function() {
+        assert.equal(self.output, 'Not Found');
+        assert.equal(self.res.statusCode, 404);
+
+        assert.isFalse(self.settings.storage.readFileStream.called);
+
+        done();
+      });
+    });
+
+    it('invokes next callback with 404 error', function(done) {
+      this.serve(this.appId, this.versionId, this.filePath, this.res, function(err) {
+        assert.equal(err.status, 404);
+        assert.isFalse(self.settings.storage.readFileStream.called);
+        done();
+      });
+    });
   });
 });
