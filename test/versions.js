@@ -13,6 +13,7 @@ describe('version', function() {
     this.settings = {};
 
     this.settings = {
+      virtualHost: '4fronthost.com',
       database: {
         createVersion: sinon.spy(function(data, callback) {
           callback(null, _.extend(data, {complete: false}));
@@ -58,7 +59,8 @@ describe('version', function() {
       },
       virtualApp: {
         appId: this.appId,
-        url: 'http://app.apphost.com'
+        url: 'http://app.apphost.com',
+        name: uid.sync(5)
       },
       organization: {
         orgId: uid.sync(10),
@@ -111,9 +113,12 @@ describe('version', function() {
 
   describe('updateVersionStatus', function() {
     it('force all traffic to new version', function(done) {
+      var virtualEnv = 'feature4';
+
       var versionData = {
         versionId: uid.sync(10),
         status: 'complete',
+        virtualEnv: virtualEnv,
         manifest: {
           router: [
             {
@@ -135,12 +140,13 @@ describe('version', function() {
 
         assert.isTrue(self.settings.database.updateTrafficRules.calledWith(
           self.context.virtualApp.appId,
-          'production',
+          virtualEnv,
           [{versionId: versionData.versionId, rule: '*'}]
         ));
 
         assert.ok(self.settings.virtualAppRegistry.flushApp.calledWith(self.context.virtualApp));
-        assert.equal(version.previewUrl, self.context.virtualApp.url);
+        assert.equal(version.previewUrl,
+          'http://' + self.context.virtualApp.name + '--' + virtualEnv + '.' + self.settings.virtualHost);
 
         done();
       });
