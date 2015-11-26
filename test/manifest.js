@@ -51,4 +51,24 @@ describe('manifest', function() {
       done();
     });
   });
+
+  it('finds manifest with custom property name', function(done) {
+    var manifestJson = {foo: 1};
+
+    var options = {propertyName: '_custom_'};
+    manifest(JSON.stringify({'_custom_': manifestJson}), options, function(err, json) {
+      assert.deepEqual(json, manifestJson);
+      done();
+    });
+  });
+
+  it('find manifest with default property when custom property not found', function(done) {
+    var manifestJson = {foo: 1};
+
+    var options = {propertyName: '_custom_'};
+    manifest(JSON.stringify({'_virtualApp': manifestJson}), options, function(err, json) {
+      assert.deepEqual(json, manifestJson);
+      done();
+    });
+  });
 });
