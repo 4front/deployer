@@ -275,6 +275,43 @@ describe('bundle', function() {
     ], done);
   });
 
+  it('skips blacklisted extensions', function(done) {
+    async.series([
+      function(cb) {
+        // Create the temp sample app archive. This time nest the files in an
+        // additional "dist" directory.
+        var archive = archiver.create('tar', {gzip: true})
+          .append(new Buffer('string'), {name: 'hello.php'})
+          .append(new Buffer('string'), {name: 'index.html' })
+          .finalize();
+
+        archive.pipe(self.sampleArchive);
+        self.sampleArchive.on('close', function() {
+          cb();
+        });
+      },
+      function(cb) {
+        self.bundle.readStream = function() {
+          return fs.createReadStream(self.sampleArchivePath);
+        };
+
+        self.deployBundle(self.bundle, self.context, function(err) {
+          if (err) return cb(err);
+
+          assert.isFalse(self.mockDeploy.calledWith(sinon.match.any, sinon.match.any, sinon.match({
+            path: sinon.match(/hello\.php/)
+          })));
+
+          assert.isTrue(self.mockDeploy.calledWith(sinon.match.any, sinon.match.any, sinon.match({
+            path: sinon.match(/index\.html/)
+          })));
+
+          cb();
+        });
+      }
+    ], done);
+  });
+
   it('deployment times out', function(done) {
     _.extend(self.bundle, {
       shouldStop: function(entry) {
