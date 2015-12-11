@@ -231,4 +231,36 @@ describe('version', function() {
       done();
     });
   });
+
+  it('cleans up old versions', function(done) {
+    this.context.virtualApp.trafficRules = {
+      production: [{versionId: 'a'}],
+      staging: [{versionId: 'c'}, {versionId: 'd'}]
+    };
+
+    var appId = this.context.virtualApp.appId;
+
+    var versions = [
+      {created: 1, versionId: 'a', appId: appId},
+      {created: 2, versionId: 'b', appId: appId},
+      {created: 3, versionId: 'c', appId: appId},
+      {created: 4, versionId: 'd', appId: appId},
+      {created: 5, versionId: 'e', appId: appId}
+    ];
+
+    this.settings.database.listVersions = sinon.spy(function(_appId, options, callback) {
+      callback(null, versions);
+    });
+
+    this.versions.deleteOldest(self.context, 2, function(err) {
+      if (err) return done(err);
+
+      assert.isTrue(self.settings.database.listVersions.calledWith(appId, {excludeIncomplete: false}));
+      assert.equal(2, self.settings.database.deleteVersion.callCount);
+      assert.isTrue(self.settings.database.deleteVersion.calledWith(appId, 'e'));
+      assert.isTrue(self.settings.database.deleteVersion.calledWith(appId, 'b'));
+
+      done();
+    });
+  });
 });
