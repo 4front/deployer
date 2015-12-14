@@ -7,7 +7,7 @@ module.exports = function(settings) {
   if (!settings.storage) throw new Error('Missing storage option');
 
   _.defaults(settings, {
-    defaultMaxAge: 30 * 60 * 30
+    defaultMaxAge: 31557600 // one year
   });
 
   var exports = {};
