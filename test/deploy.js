@@ -60,7 +60,8 @@ describe('deploy', function() {
     });
   });
 
-  it('deploy compressible file', function(done) {
+  it('gzips compressible files when gzipStaticAssets is true', function(done) {
+    this.settings.gzipStaticAssets = true;
     var filePath = 'js/' + Date.now() + '.js';
     var fullPath = path.join(os.tmpdir(), filePath);
     var contents = 'function(){asdlfkjasdfkalsdjfakldfgjslkdfgjskldfjgklsdjfgklsdjklasjdlk asdkfasldkfhasdfh}';
