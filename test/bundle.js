@@ -275,6 +275,41 @@ describe('bundle', function() {
     ], done);
   });
 
+  it('invokes onManifest function', function(done) {
+    this.context.onManifest = sinon.spy(function(organization, virtualApp, manifest) {
+      manifest.modified = true;
+    });
+
+    async.series([
+      function(cb) {
+        // Create the temp sample app archive
+        var archive = archiver.create('tar', {gzip: true})
+          .directory(path.join(__dirname, './fixtures/sample-app'), 'sample-app')
+          .finalize();
+
+        archive.pipe(self.sampleArchive);
+
+        self.sampleArchive.on('close', function() {
+          cb();
+        });
+      },
+      function(cb) {
+        self.bundle.readStream = function() {
+          return fs.createReadStream(self.sampleArchivePath);
+        };
+
+        self.deployBundle(self.bundle, self.context, function(err) {
+          if (err) return cb(err);
+
+          assert.isTrue(self.context.onManifest.calledWith(self.context.organization,
+            self.context.virtualApp, sinon.match({router: sinon.match.array})));
+          assert.isTrue(self.mockVersions.updateStatus.getCall(0).args[0].manifest.modified);
+          cb();
+        });
+      }
+    ], done);
+  });
+
   it('skips blacklisted extensions', function(done) {
     async.series([
       function(cb) {
