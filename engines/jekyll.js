@@ -1,4 +1,5 @@
 var spawn = require('child_process').spawn;
+var _ = require('lodash');
 var async = require('async');
 var path = require('path');
 var os = require('os');
@@ -65,6 +66,13 @@ module.exports = function(settings) {
           stdio: 'pipe',
           cwd: tempDir // run the command from the temp directory
         };
+
+        if (settings.gemPath) {
+          spawnOptions.env = _.extend({}, process.env, {
+            GEM_PATH: settings.gemPath,
+            GEM_HOME: settings.gemPath
+          });
+        }
 
         var jekyllProcess = spawn(jekyllPath, jekyllArgs, spawnOptions);
         jekyllProcess.stdout.on('data', function(data) {
