@@ -20,15 +20,10 @@ describe('bundle', function() {
     self = this;
 
     this.mockVersions = {};
-    this.mockDeploy = {};
 
     mockery.enable({warnOnUnregistered: false});
     mockery.registerMock('./versions', function() {
       return self.mockVersions;
-    });
-
-    mockery.registerMock('./deploy', function() {
-      return self.mockDeploy;
     });
   });
 

@@ -55,18 +55,18 @@ module.exports = function(settings) {
         cb();
       },
       function(cb) {
-        var jekyllArgs = [
-          'build',
-          '--source',
-          sourceDirectory,
-          '--destination',
-          destDirectory
-        ];
+        var jekyllArgs = ['build', '--source', 'source', '--destination', '_site'];
 
         settings.logger.info('invoking jekyll with args %s', jekyllArgs.join(' '));
 
         var processExited = false;
-        var jekyllProcess = spawn(jekyllPath, jekyllArgs, {stdio: 'pipe'});
+
+        var spawnOptions = {
+          stdio: 'pipe',
+          cwd: tempDir // run the command from the temp directory
+        };
+
+        var jekyllProcess = spawn(jekyllPath, jekyllArgs, spawnOptions);
         jekyllProcess.stdout.on('data', function(data) {
           settings.logger.info(data.toString());
         });

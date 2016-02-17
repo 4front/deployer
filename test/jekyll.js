@@ -64,9 +64,9 @@ describe('jekyll', function() {
 
           var expectedDeployedFiles = ['index.html', 'about/index.html', 'jekyll/update/2016/02/16/welcome-to-jekyll.html'];
 
-          for (var i = 0; i < 5; i++) {
-            console.log(self.settings.storage.writeStream.getCall(i).args[0].path);
-          }
+          // for (var i = 0; i < 5; i++) {
+          //   console.log(self.settings.storage.writeStream.getCall(i).args[0].path);
+          // }
 
           // make assertions about what files were deployed.
           expectedDeployedFiles.forEach(function(filePath) {
