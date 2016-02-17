@@ -9,7 +9,7 @@ var zlib = require('zlib');
 module.exports = function(settings) {
   var deploy = require('../lib/deploy')(settings);
 
-  return function(sourceBundle, versionId, appId, callback) {
+  return function(sourceBundle, appId, versionId, callback) {
     settings.logger.info('deploy app with the jekyll deployer');
 
     // Create a temporary directory on disk.

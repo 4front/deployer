@@ -57,7 +57,7 @@ describe('jekyll', function() {
         archive.pipe(archiveStream).on('finish', cb);
       },
       function(cb) {
-        jekyll(sourceBundle, self.versionId, self.appId, function(err) {
+        jekyll(sourceBundle, self.appId, self.versionId, function(err) {
           if (err) return cb(err);
 
           assert.equal(5, self.settings.storage.writeStream.callCount);

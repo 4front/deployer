@@ -3,6 +3,7 @@ var _ = require('lodash');
 var tar = require('tar');
 var zlib = require('zlib');
 var path = require('path');
+var debug = require('debug')('4front:deployer:basic');
 
 var blackListedExtensions = ['php', 'asp'];
 
@@ -10,9 +11,9 @@ var blackListedExtensions = ['php', 'asp'];
 // the source bundle without any pre-processing. Files are piped
 // directly from the source bundle to storage without ever touching disk.
 module.exports = function(settings) {
-  var deploy = require('./deploy')(settings);
+  var deploy = require('../lib/deploy')(settings);
 
-  return function(sourceBundle, versionId, appId, callback) {
+  return function(sourceBundle, appId, versionId, callback) {
     var uploadsStarted = 0;
     var callbackCalled = false;
 
@@ -63,6 +64,8 @@ module.exports = function(settings) {
       var deployFile = getDeployFile(entry, rootDirectory);
       if (!deployFile) return;
 
+      debug('parsed entry %s in archive', deployFile.path);
+
       var extname = path.extname(deployFile.path).toLowerCase();
       if (blackListedExtensions.indexOf(extname.slice(1)) !== -1) {
         settings.logger.debug('skipping file %s with blacklisted extension', deployFile.path);
@@ -88,6 +91,8 @@ module.exports = function(settings) {
       uploadsStarted++;
       deploy(appId, versionId, deployFile, function(err) {
         if (err) {
+          debugger;
+          debug('deploy error for file %s', deployFile.path);
           settings.logger.warn('error deploying file %s: %o', deployFile.path, err.stack);
           callbackCalled = true;
           callback(err);

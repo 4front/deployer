@@ -9,6 +9,7 @@ var mockery = require('mockery');
 var os = require('os');
 var sinon = require('sinon');
 var assert = require('assert');
+var urljoin = require('url-join');
 
 require('dash-assert');
 
@@ -97,6 +98,9 @@ describe('bundle', function() {
       storage: {
         readFile: sinon.spy(function(key, callback) {
           callback(null, self.packageJson);
+        }),
+        writeStream: sinon.spy(function(params, callback) {
+          callback();
         })
       },
       database: {
@@ -144,11 +148,11 @@ describe('bundle', function() {
             manifest: {}
           }), self.context);
 
-          assert.equal(self.mockDeploy.callCount, self.sampleFiles.length + 1);
+          assert.equal(self.settings.storage.writeStream.callCount, self.sampleFiles.length + 1);
 
           self.sampleFiles.forEach(function(sampleFile) {
-            assert.isTrue(self.mockDeploy.calledWith(self.appId, self.versionId, sinon.match({
-              path: sampleFile
+            assert.isTrue(self.settings.storage.writeStream.calledWith(sinon.match({
+              path: urljoin(self.appId, self.versionId, sampleFile)
             })));
           });
 
@@ -192,13 +196,13 @@ describe('bundle', function() {
         self.deployBundle(self.bundle, self.context, function(err) {
           if (err) return cb(err);
 
-          assert.isFalse(self.mockDeploy.calledWith(self.appId, self.versionId, sinon.match({
-            path: 'ignore.html'
+          assert.isFalse(self.settings.storage.writeStream.calledWith(sinon.match(function(arg) {
+            return arg.path.indexOf('ignore.html') !== -1;
           })));
 
           self.sampleFiles.forEach(function(sampleFile) {
-            assert.isTrue(self.mockDeploy.calledWith(self.appId, self.versionId, sinon.match({
-              path: sampleFile
+            assert.isTrue(self.settings.storage.writeStream.calledWith(sinon.match({
+              path: urljoin(self.appId, self.versionId, sampleFile)
             })));
           });
 
@@ -233,13 +237,13 @@ describe('bundle', function() {
         self.deployBundle(self.bundle, self.context, function(err) {
           if (err) return cb(err);
 
-          assert.isFalse(self.mockDeploy.calledWith(sinon.match.any, sinon.match.any, sinon.match({
-            path: sinon.match(/ignore\.html/)
+          assert.isFalse(self.settings.storage.writeStream.calledWith(sinon.match(function(arg) {
+            return arg.path.indexOf('ignore.html') !== -1;
           })));
 
           self.sampleFiles.forEach(function(sampleFile) {
-            assert.isTrue(self.mockDeploy.calledWith(self.appId, self.versionId, sinon.match({
-              path: sampleFile
+            assert.isTrue(self.settings.storage.writeStream.calledWith(sinon.match({
+              path: urljoin(self.appId, self.versionId, sampleFile)
             })));
           });
 
@@ -333,12 +337,12 @@ describe('bundle', function() {
         self.deployBundle(self.bundle, self.context, function(err) {
           if (err) return cb(err);
 
-          assert.isFalse(self.mockDeploy.calledWith(sinon.match.any, sinon.match.any, sinon.match({
-            path: sinon.match(/hello\.php/)
+          assert.isFalse(self.settings.storage.writeStream.calledWith(sinon.match(function(arg) {
+            return arg.path.indexOf('hello.php') !== -1;
           })));
 
-          assert.isTrue(self.mockDeploy.calledWith(sinon.match.any, sinon.match.any, sinon.match({
-            path: sinon.match(/index\.html/)
+          assert.isTrue(self.settings.storage.writeStream.calledWith(sinon.match({
+            path: urljoin(self.appId, self.versionId, 'index.html')
           })));
 
           cb();
