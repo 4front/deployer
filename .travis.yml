@@ -1,8 +1,7 @@
 language: node_js
 node_js:
   - "0.12"
-rvm:
-  - 2.2.0
+before_install: rvm use 2.2.0
 install:
   - gem install jekyll
 script: "npm run-script test-travis"
