@@ -6,6 +6,9 @@ var path = require('path');
 
 var blackListedExtensions = ['php', 'asp'];
 
+// Basic deploy engine that deploys files exactly as they appear in
+// the source bundle without any pre-processing. Files are piped
+// directly from the source bundle to storage without ever touching disk.
 module.exports = function(settings) {
   var deploy = require('./deploy')(settings);
 
