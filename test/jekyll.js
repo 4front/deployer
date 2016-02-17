@@ -32,7 +32,7 @@ describe('jekyll', function() {
   });
 
   it('builds jekyll-sample', function(done) {
-    this.timeout(2000);
+    this.timeout(4000);
     var archivePath = path.join(os.tmpdir(), this.versionId + '.tar.gz');
 
     var sourceBundle = {
@@ -59,6 +59,8 @@ describe('jekyll', function() {
       function(cb) {
         jekyll(sourceBundle, self.versionId, self.appId, function(err) {
           if (err) return cb(err);
+
+          assert.equal(5, self.settings.storage.writeStream.callCount);
 
           var expectedDeployedFiles = ['index.html', 'about/index.html', 'jekyll/update/2016/02/16/welcome-to-jekyll.html'];
           // make assertions about what files were deployed.
