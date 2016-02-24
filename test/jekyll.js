@@ -7,6 +7,7 @@ var path = require('path');
 var archiver = require('archiver');
 var sinon = require('sinon');
 var urljoin = require('url-join');
+var winston = require('winston');
 
 require('dash-assert');
 
@@ -16,40 +17,41 @@ describe('jekyll', function() {
     self = this;
 
     this.settings = {
-      logger: {
-        info: function() {},
-        debug: function() {}
-      },
+      logger: winston,
       storage: {
         writeStream: sinon.spy(function(params, callback) {
           callback();
         })
-      }
+      },
+      rubyPath: '/usr/local/rvm/rubies/ruby-2.2.0/bin',
+      jekyllExecutable: '/usr/local/rvm/gems/ruby-2.2.0/bin/jekyll',
+      gemPath: process.env.GEM_PATH
     };
 
     this.versionId = shortid.generate();
     this.appId = shortid.generate();
-  });
 
-  it('builds jekyll-sample', function(done) {
-    this.timeout(4000);
-    var archivePath = path.join(os.tmpdir(), this.versionId + '.tar.gz');
+    this.archivePath = path.join(os.tmpdir(), this.versionId + '.tar.gz');
 
-    var sourceBundle = {
+    this.sourceBundle = {
       readStream: function() {
-        return fs.createReadStream(archivePath);
+        return fs.createReadStream(self.archivePath);
       },
       buildConfig: {
         engine: 'jekyll'
       }
     };
 
-    var jekyll = require('../engines/jekyll')(this.settings);
+    this.jekyll = require('../engines/jekyll')(this.settings);
+  });
+
+  it('builds jekyll-sample', function(done) {
+    this.timeout(20000);
 
     async.series([
       function(cb) {
         // Create a tarball of the jekyll-sample directory
-        var archiveStream = fs.createWriteStream(archivePath);
+        var archiveStream = fs.createWriteStream(self.archivePath);
         var archive = archiver.create('tar', {gzip: true})
           .directory(path.join(__dirname, './fixtures/jekyll-sample'), 'sample-app')
           .finalize();
@@ -57,16 +59,12 @@ describe('jekyll', function() {
         archive.pipe(archiveStream).on('finish', cb);
       },
       function(cb) {
-        jekyll(sourceBundle, self.appId, self.versionId, function(err) {
+        self.jekyll(self.sourceBundle, self.appId, self.versionId, function(err) {
           if (err) return cb(err);
 
           assert.equal(5, self.settings.storage.writeStream.callCount);
 
           var expectedDeployedFiles = ['index.html', 'about/index.html', 'jekyll/update/2016/02/16/welcome-to-jekyll.html'];
-
-          // for (var i = 0; i < 5; i++) {
-          //   console.log(self.settings.storage.writeStream.getCall(i).args[0].path);
-          // }
 
           // make assertions about what files were deployed.
           expectedDeployedFiles.forEach(function(filePath) {
@@ -80,4 +78,29 @@ describe('jekyll', function() {
       }
     ], done);
   });
+
+  it('handles missing _config.yml', function(done) {
+    this.timeout(5000);
+    async.series([
+      function(cb) {
+        // Create a tarball of the jekyll-sample directory
+        var archiveStream = fs.createWriteStream(self.archivePath);
+        var archive = archiver.create('tar', {gzip: true})
+          .glob('jekyll-sample/**/*.*', {
+            ignore: '**/_config.yml',
+            cwd: path.join(__dirname, './fixtures')
+          })
+          .finalize();
+
+        archive.pipe(archiveStream).on('finish', cb);
+      },
+      function(cb) {
+        self.jekyll(self.sourceBundle, self.appId, self.versionId, cb);
+      }
+    ], done);
+  });
+
+  // it('handles invalid gem', function(done) {
+  //
+  // });
 });
