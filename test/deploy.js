@@ -157,4 +157,20 @@ describe('deploy', function() {
 
     async.series(seriesTasks, done);
   });
+
+  it('handles error deploying an individual file', function(done) {
+    this.settings.storage.writeStream = sinon.spy(function(fileInfo, callback) {
+      if (path.basename(fileInfo.path) === 'app.js') {
+        return callback(new Error('failed to deploy js/app.js'));
+      }
+      callback(null);
+    });
+
+    var dir = path.join(__dirname, './fixtures/sample-app');
+    self.deploy(self.appId, self.versionId, {type: 'Directory', path: dir}, function(err) {
+      assert.ok(err);
+      assert.equal(err.message, 'failed to deploy js/app.js');
+      done();
+    });
+  });
 });
