@@ -43,7 +43,7 @@ module.exports = function(settings) {
       },
       function(cb) {
         settings.logger.debug('gem install plugins to %s', gemsDirectory);
-        gemInstallPlugins(jekyllConfig, gemsDirectory, cb);
+        gemInstallPlugins(jekyllConfig, sourceBundle, gemsDirectory, cb);
       },
       function(cb) {
         // TODO: Assume a different role that has no AWS permissions.
@@ -53,7 +53,7 @@ module.exports = function(settings) {
         cb();
       },
       function(cb) {
-        runJekyllBuild(tempDir, gemsDirectory, cb);
+        runJekyllBuild(sourceBundle, tempDir, gemsDirectory, cb);
       },
       function(cb) {
         // Recursively deploy the entire destDirectory
@@ -74,7 +74,6 @@ module.exports = function(settings) {
         settings.logger.error(err);
         return callback(err);
       }
-
 
       callback();
     });
@@ -110,7 +109,7 @@ module.exports = function(settings) {
     });
   }
 
-  function gemInstallPlugins(jekyllConfig, gemsDirectory, callback) {
+  function gemInstallPlugins(jekyllConfig, sourceBundle, gemsDirectory, callback) {
     if (!_.isArray(jekyllConfig.gems) || jekyllConfig.gems.length === 0) {
       return callback();
     }
@@ -135,14 +134,15 @@ module.exports = function(settings) {
           '--no-rdoc',
           '--force',
           '--conservative'],
-        logger: settings.logger
+        logger: settings.logger,
+        env: _.extend({}, process.env, sourceBundle.untrustedRoleEnv)
       };
 
       common.spawnProcess(spawnParams, cb);
     }, callback);
   }
 
-  function runJekyllBuild(tempDirectory, gemsDirectory, callback) {
+  function runJekyllBuild(sourceBundle, tempDirectory, gemsDirectory, callback) {
     settings.logger.info('running jekyll build');
 
     var spawnParams = {
@@ -153,7 +153,7 @@ module.exports = function(settings) {
       // Tack the temporary gem path onto the default gem path
       env: _.extend({}, process.env, {
         GEM_PATH: settings.gemPath + ':' + gemsDirectory
-      })
+      }, sourceBundle.untrustedRoleEnv)
     };
 
     common.spawnProcess(spawnParams, callback);
