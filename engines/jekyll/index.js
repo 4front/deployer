@@ -3,6 +3,7 @@ var async = require('async');
 var path = require('path');
 var os = require('os');
 var fs = require('fs');
+var rimraf = require('rimraf');
 var yaml = require('js-yaml');
 var common = require('../common');
 
@@ -63,6 +64,10 @@ module.exports = function(settings) {
           sourceBundle.fileCount = results.filesDeployed;
           cb();
         });
+      },
+      function(cb) {
+        settings.logger.debug('deleting the temporary directory');
+        rimraf(tempDir, cb);
       }
     ], function(err) {
       if (err) {
