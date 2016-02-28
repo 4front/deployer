@@ -10,6 +10,7 @@ var sinon = require('sinon');
 var urljoin = require('url-join');
 var winston = require('winston');
 
+winston.level = 'debug';
 require('dash-assert');
 
 describe('jekyll', function() {

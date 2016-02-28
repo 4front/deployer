@@ -3,6 +3,7 @@ var fs = require('fs-extra');
 var path = require('path');
 var debug = require('debug')('4front:deployer:jekyll:gems');
 var _ = require('lodash');
+var rimraf = require('rimraf');
 var yaml = require('js-yaml');
 var common = require('../../common');
 
@@ -21,6 +22,10 @@ module.exports = function(params, callback) {
       var destPath = path.join(localGemsDirectory, '/ruby/' + params.rubyVersion);
       params.logger.debug('copy gems from %s to %s', params.systemGemPath, destPath);
       fs.copy(params.systemGemPath, destPath, cb);
+    },
+    function(cb) {
+      // Delete the bin directory
+      rimraf(path.join(localGemsDirectory, 'ruby', params.rubyVersion, 'bin'), cb);
     },
     function(cb) {
       bundleInstall(params, localGemsDirectory, cb);
