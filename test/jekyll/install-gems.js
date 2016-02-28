@@ -1,4 +1,5 @@
 var installGems = require('../../engines/jekyll/lib/install-gems');
+var _ = require('lodash');
 var fs = require('fs');
 var sinon = require('sinon');
 var path = require('path');
@@ -19,18 +20,16 @@ describe('jekyll/install-gems', function() {
 
     logger = new winston.Logger({transports: [new (winston.transports.Console)()]});
 
-    self.gemParams = {
-      buildDirectory: this.buildDirectory,
-      sourceDirectory: this.sourceDirectory,
-      systemGemPath: path.join(__dirname, '../gems'),
-      rubyVersion: '2.2.0',
-      rubyPath: '/usr/local/rvm/rubies/ruby-2.2.0/bin',
-      logger: {
-        info: sinon.spy(logger, 'info'),
-        debug: sinon.spy(logger, 'debug'),
-        warn: sinon.spy(logger, 'warn')
-      }
-    };
+    self.gemParams = _.extend({},
+      require('../../local-ruby-config'), {
+        buildDirectory: this.buildDirectory,
+        sourceDirectory: this.sourceDirectory,
+        logger: {
+          info: sinon.spy(logger, 'info'),
+          debug: sinon.spy(logger, 'debug'),
+          warn: sinon.spy(logger, 'warn')
+        }
+      });
 
     fs.mkdirSync(this.buildDirectory);
     fs.mkdirSync(this.sourceDirectory);

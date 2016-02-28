@@ -3,6 +3,7 @@ var assert = require('assert');
 var shortid = require('shortid');
 var fs = require('fs');
 var os = require('os');
+var _ = require('lodash');
 var path = require('path');
 var archiver = require('archiver');
 var sinon = require('sinon');
@@ -16,17 +17,14 @@ describe('jekyll', function() {
   beforeEach(function() {
     self = this;
 
-    this.settings = {
+    this.settings = _.extend({}, require('../local-ruby-config'), {
       logger: winston,
       storage: {
         writeStream: sinon.spy(function(params, callback) {
           callback();
         })
-      },
-      rubyPath: '/usr/local/rvm/rubies/ruby-2.2.0/bin',
-      rubyVersion: '2.2.0',
-      systemGemPath: path.join(__dirname, './gems')
-    };
+      }
+    });
 
     this.versionId = shortid.generate();
     this.appId = shortid.generate();
