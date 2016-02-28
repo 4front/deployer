@@ -52,10 +52,10 @@ module.exports = function(settings) {
           cb();
         });
       },
-      // function(cb) {
-      //   settings.logger.debug('deleting the temporary build directory');
-      //   rimraf(params.buildDirectory, cb);
-      // }
+      function(cb) {
+        settings.logger.debug('deleting the temporary build directory');
+        rimraf(params.buildDirectory, cb);
+      }
     ], function(err) {
       if (err) {
         settings.logger.error(err);
