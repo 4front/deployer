@@ -3,12 +3,12 @@ var tar = require('tar');
 var _ = require('lodash');
 var spawn = require('child_process').spawn;
 
-module.exports.unpackSourceBundle = function(sourceBundle, sourceDirectory, callback) {
+module.exports.unpackSourceBundle = function(readStream, dest, callback) {
   // Unpack the sourceBundle to the source directory.
-  sourceBundle.readStream()
+  readStream()
     .pipe(zlib.createGunzip())
     .pipe(tar.Extract({  // eslint-disable-line
-      path: sourceDirectory,
+      path: dest,
       strip: 1 // skip past the top-level directory to the good stuff
     }))
     .on('error', function(err) {

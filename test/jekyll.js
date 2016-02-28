@@ -24,8 +24,8 @@ describe('jekyll', function() {
         })
       },
       rubyPath: '/usr/local/rvm/rubies/ruby-2.2.0/bin',
-      jekyllExecutable: '/usr/local/rvm/gems/ruby-2.2.0/bin/jekyll',
-      gemPath: process.env.GEM_PATH
+      rubyVersion: '2.2.0',
+      systemGemPath: path.join(__dirname, './gems')
     };
 
     this.versionId = shortid.generate();
@@ -46,7 +46,7 @@ describe('jekyll', function() {
   });
 
   it('builds jekyll-sample', function(done) {
-    this.timeout(20000);
+    this.timeout(30000);
 
     async.series([
       function(cb) {
@@ -64,7 +64,8 @@ describe('jekyll', function() {
 
           assert.equal(5, self.settings.storage.writeStream.callCount);
 
-          var expectedDeployedFiles = ['index.html', 'about/index.html', 'jekyll/update/2016/02/16/welcome-to-jekyll.html'];
+          var expectedDeployedFiles = ['index.html', 'about/index.html',
+            'jekyll/update/2016/02/16/welcome-to-jekyll.html'];
 
           // make assertions about what files were deployed.
           expectedDeployedFiles.forEach(function(filePath) {

@@ -12,6 +12,12 @@ Deployment module for the [4front](http://4front.io) front-end web app platform.
 npm test
 ~~~
 
+### Running jekyll Tests
+
+First run this command to create a gems directory in the tests directory.
+
+`gem install jekyll --no-ri --no-rdoc --install-dir ./test/gems`
+
 ## Notes
 
 ## License
