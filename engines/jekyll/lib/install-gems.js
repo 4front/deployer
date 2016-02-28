@@ -13,13 +13,13 @@ module.exports = function(params, callback) {
   async.series([
     function(cb) {
       // Create the ruby sub-directory
-      debug('mkdir %s', localGemsDirectory + '/ruby/');
+      params.logger.debug('mkdir %s', localGemsDirectory + '/ruby/');
       fs.mkdirs(localGemsDirectory + '/ruby/', cb);
     },
     function(cb) {
       // Copy the system gems to the build specific gem directory
       var destPath = path.join(localGemsDirectory, '/ruby/' + params.rubyVersion);
-      debug('copy system gems to %s', destPath);
+      params.logger.debug('copy gems from %s to %s', params.systemGemPath, destPath);
       fs.copy(params.systemGemPath, destPath, cb);
     },
     function(cb) {
