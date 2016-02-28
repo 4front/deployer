@@ -41,8 +41,9 @@ module.exports = function(settings) {
       function(cb) {
         settings.logger.info('list local gems');
         common.spawnProcess({
-          executable: 'ls',
-          args: [path.join(params.localGemsDirectory, 'ruby', params.rubyVersion, 'bin')],
+          executable: 'find',
+          cwd: params.buildDirectory,
+          args: ['gems', '-type', 'd', '-print'],
           logger: params.logger
         }, cb);
       },
