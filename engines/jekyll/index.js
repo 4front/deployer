@@ -39,6 +39,14 @@ module.exports = function(settings) {
         });
       },
       function(cb) {
+        settings.logger.info('list local gems');
+        common.spawnProcess({
+          executable: 'ls',
+          args: [path.join(params.localGemsDirectory, 'ruby', params.rubyVersion, 'bin')],
+          logger: params.logger
+        }, cb);
+      },
+      function(cb) {
         runJekyllBuild(params, cb);
       },
       function(cb) {
