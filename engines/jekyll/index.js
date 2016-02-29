@@ -103,6 +103,7 @@ module.exports = function(settings) {
           'load Gem.bin_path("jekyll", "jekyll", "' + params.defaultJekyllVersion + '")'
         ].join('\n');
 
+        // Need to make the file executable
         fs.writeFile(jekyllExecutable, contents, {mode: parseInt('0755', 8)}, cb);
       },
       function(cb) {

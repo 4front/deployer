@@ -44,7 +44,7 @@ module.exports.spawnProcess = function(params, callback) {
   process.on('exit', function(code) {
     if (processExited) return;
     processExited = true;
-    if (code !== 0) {
+    if (_.isNumber(code) && code !== 0) {
       params.logger.error('gem install failed with code %s', code);
       callback(new Error('Error from gem'));
     } else {
