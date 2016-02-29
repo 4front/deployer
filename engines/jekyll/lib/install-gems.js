@@ -3,7 +3,7 @@ var fs = require('fs-extra');
 var path = require('path');
 var debug = require('debug')('4front:deployer:jekyll:gems');
 var _ = require('lodash');
-var rimraf = require('rimraf');
+// var rimraf = require('rimraf');
 var yaml = require('js-yaml');
 var common = require('../../common');
 
@@ -12,24 +12,25 @@ module.exports = function(params, callback) {
   var jekyllConfig;
 
   async.series([
-    function(cb) {
-      // Create the ruby sub-directory
-      params.logger.debug('mkdir %s', localGemsDirectory + '/ruby/');
-      fs.mkdirs(localGemsDirectory + '/ruby/', cb);
-    },
-    function(cb) {
-      // Copy the system gems to the build specific gem directory
-      var destPath = path.join(localGemsDirectory, '/ruby/' + params.rubyVersion);
-      params.logger.debug('copy gems from %s to %s', params.systemGemPath, destPath);
-      fs.copy(params.systemGemPath, destPath, cb);
-    },
-    function(cb) {
-      // Delete the bin directory
-      rimraf(path.join(localGemsDirectory, 'ruby', params.rubyVersion, 'bin'), cb);
-    },
-    function(cb) {
-      bundleInstall(params, localGemsDirectory, cb);
-    },
+    // function(cb) {
+    //   // Create the ruby sub-directory
+    //   params.logger.debug('mkdir %s', localGemsDirectory + '/ruby/');
+    //   fs.mkdirs(localGemsDirectory + '/ruby/', cb);
+    // },
+    // function(cb) {
+    //   // Copy the system gems to the build specific gem directory
+    //   // TODO: Can we use symlinks instead of physically copying?
+    //   var destPath = path.join(localGemsDirectory, '/ruby/' + params.rubyVersion);
+    //   params.logger.debug('copy gems from %s to %s', params.systemGemPath, destPath);
+    //   fs.copy(params.systemGemPath, destPath, cb);
+    // },
+    // function(cb) {
+    //   // Delete the bin directory
+    //   rimraf(path.join(localGemsDirectory, 'ruby', params.rubyVersion, 'bin'), cb);
+    // },
+    // function(cb) {
+    //   bundleInstall(params, localGemsDirectory, cb);
+    // },
     function(cb) {
       loadJekyllConfig(params, function(err, config) {
         if (err) return cb(err);
@@ -45,40 +46,32 @@ module.exports = function(params, callback) {
   });
 };
 
-function bundleInstall(params, localGemsDirectory, callback) {
-  // First look for a Gemfile, if one exists run bundle install
-  fs.stat(path.join(params.sourceDirectory, 'Gemfile'), function(err) {
-    if (err) {
-      if (err.code === 'ENOENT') {
-        params.logger.debug('no Gemfile found');
-        return callback(null);
-      }
-      return callback(err);
-    }
-
-    var bundlerParams = {
-      executable: path.join(params.rubyPath, 'bundle'),
-      cwd: params.sourceDirectory,
-      args: [
-        'install',
-        '--path',
-        localGemsDirectory
-      ],
-      logger: params.logger,
-      env: _.extend({}, process.env, params.untrustedRoleEnv)
-    };
-
-    common.spawnProcess(bundlerParams, callback);
-  });
-}
-
-// function symLinkGemsToInstallDir() {
-//   // copy /usr/local/rvm/gems/ruby-2.2.0/ to
-//   // /var/folders/j2/24gly85j1bx726crshcxd51m0000gn/T/E1ffMwjsg/gems/ruby/2.2.0
-//   // tempGemDirectory = /var/folders/j2/24gly85j1bx726crshcxd51m0000gn/T/E1ffMwjsg/gems
-//   mkdirp
-// }
+// function bundleInstall(params, localGemsDirectory, callback) {
+//   // First look for a Gemfile, if one exists run bundle install
+//   fs.stat(path.join(params.sourceDirectory, 'Gemfile'), function(err) {
+//     if (err) {
+//       if (err.code === 'ENOENT') {
+//         params.logger.debug('no Gemfile found');
+//         return callback(null);
+//       }
+//       return callback(err);
+//     }
 //
+//     var bundlerParams = {
+//       executable: path.join(params.rubyPath, 'bundle'),
+//       cwd: params.sourceDirectory,
+//       args: [
+//         'install',
+//         '--path',
+//         localGemsDirectory
+//       ],
+//       logger: params.logger,
+//       env: _.extend({}, process.env, params.untrustedRoleEnv)
+//     };
+//
+//     common.spawnProcess(bundlerParams, callback);
+//   });
+// }
 
 function gemInstallPlugins(params, jekyllConfig, localGemsDirectory, callback) {
   if (!_.isArray(jekyllConfig.gems) || jekyllConfig.gems.length === 0) {
@@ -107,10 +100,17 @@ function gemInstallPlugins(params, jekyllConfig, localGemsDirectory, callback) {
         '--force',
         '--conservative'],
       logger: params.logger,
-      env: _.extend({}, process.env, params.untrustedRoleEnv)
+      env: _.extend({}, process.env, {
+        GEM_PATH: params.systemGemPath + ':' + localGemsDirectory
+      }, params.untrustedRoleEnv)
     };
 
-    common.spawnProcess(spawnParams, cb);
+    common.spawnProcess(spawnParams, function(err) {
+      if (err) {
+        return cb(Error.create('Error installing gem ' + gemName));
+      }
+      cb();
+    });
   }, callback);
 }
 

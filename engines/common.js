@@ -1,7 +1,10 @@
 var zlib = require('zlib');
 var tar = require('tar');
+var path = require('path');
 var _ = require('lodash');
 var spawn = require('child_process').spawn;
+
+require('simple-errors');
 
 module.exports.unpackSourceBundle = function(readStream, dest, callback) {
   // Unpack the sourceBundle to the source directory.
@@ -45,8 +48,7 @@ module.exports.spawnProcess = function(params, callback) {
     if (processExited) return;
     processExited = true;
     if (_.isNumber(code) && code !== 0) {
-      params.logger.error('gem install failed with code %s', code);
-      callback(new Error('Error from gem'));
+      callback(Error.create('Process ' + path.basename(params.executable) + ' failed', {code: code}));
     } else {
       params.logger.info('gem install complete');
       callback();
