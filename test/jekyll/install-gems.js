@@ -35,28 +35,6 @@ describe('jekyll/install-gems', function() {
     fs.mkdirSync(this.sourceDirectory);
   });
 
-  it('installs gems using bundler', function(done) {
-    this.timeout(20000);
-
-    logger.info('write Gemfile');
-    fs.writeFileSync(path.join(this.sourceDirectory, 'Gemfile'), [
-      'source "https://rubygems.org"',
-      'gem "jekyll", ">=3.1.2"',
-      'gem "jekyll-paginate"'
-    ].join('\n'));
-
-    installGems(self.gemParams, function(err) {
-      if (err) return done(err);
-
-      assert.isTrue(fs.existsSync(path.join(self.buildDirectory, 'gems/ruby/2.2.0/gems/jekyll-3.1.2')));
-      assert.isTrue(logger.info.calledWith(sinon.match(/Using jekyll 3\.1\.2/)));
-      assert.isTrue(logger.info.calledWith(sinon.match(/Using liquid 3\.0\.6/)));
-      assert.isTrue(logger.info.calledWith(sinon.match(/Installing jekyll-paginate 1\.1\.0/)));
-
-      done();
-    });
-  });
-
   it('installs plugin gems from _config.yml', function(done) {
     this.timeout(20000);
 

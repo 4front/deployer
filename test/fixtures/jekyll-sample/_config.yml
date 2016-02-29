@@ -20,7 +20,7 @@ github_username:  jekyll
 # Build settings
 markdown: kramdown
 
-gems: [jekyll-paginate]
+gems: [jekyll-paginate, aws-sdk]
 
 # Pagination settings
 paginate: 15

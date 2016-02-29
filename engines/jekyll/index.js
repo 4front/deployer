@@ -5,7 +5,6 @@ var os = require('os');
 var fs = require('fs-extra');
 var rimraf = require('rimraf');
 var common = require('../common');
-// var fileExists = require('file-exists');
 var installGems = require('./lib/install-gems');
 
 module.exports = function(settings) {
@@ -68,10 +67,6 @@ module.exports = function(settings) {
   };
 
   function runJekyllBuild(params, callback) {
-    // /var/task/customruby/lib/ruby/gems/2.3.0/gems/jekyll-3.1.2/bin
-    // Create a jekyll file in bin
-    // var gemBinDirectory = path.join(params.localGemsDirectory, 'ruby', params.rubyVersion, 'bin');
-
     var jekyllExecutable = path.join(params.rubyPath, 'jekyll');
 
     settings.logger.info('running jekyll build');
