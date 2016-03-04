@@ -6,6 +6,10 @@ module.exports = function(settings) {
 
   if (!settings.storage) throw new Error('Missing storage option');
 
+  if (settings.localRuby === true) {
+    _.extend(settings, require('./local-ruby-config'));
+  }
+
   _.defaults(settings, {
     defaultMaxAge: 31557600 // one year
   });
