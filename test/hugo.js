@@ -13,12 +13,13 @@ var winston = require('winston');
 winston.level = 'debug';
 require('dash-assert');
 
-describe('integration-jekyll', function() {
+describe('integration-hugo', function() {
   var self;
   beforeEach(function() {
     self = this;
 
-    this.settings = _.extend({}, require('../local-ruby-config'), {
+    this.settings = _.extend({}, {
+      hugoBinary: 'hugo',
       logger: winston,
       storage: {
         writeStream: sinon.spy(function(params, callback) {
@@ -29,7 +30,6 @@ describe('integration-jekyll', function() {
 
     this.versionId = shortid.generate();
     this.appId = shortid.generate();
-
     this.archivePath = path.join(os.tmpdir(), this.versionId + '.tar.gz');
 
     this.sourceBundle = {
@@ -37,22 +37,22 @@ describe('integration-jekyll', function() {
         return fs.createReadStream(self.archivePath);
       },
       buildConfig: {
-        engine: 'jekyll'
+        engine: 'hugo'
       }
     };
 
-    this.jekyll = require('../engines/jekyll')(this.settings);
+    this.jekyll = require('../engines/hugo')(this.settings);
   });
 
-  it('builds jekyll-sample', function(done) {
+  it('builds hugo-sample', function(done) {
     this.timeout(30000);
 
     async.series([
       function(cb) {
-        // Create a tarball of the jekyll-sample directory
+        // Create a tarball of the hugo-sample directory
         var archiveStream = fs.createWriteStream(self.archivePath);
         var archive = archiver.create('tar', {gzip: true})
-          .directory(path.join(__dirname, './fixtures/jekyll-sample'), 'sample-app')
+          .directory(path.join(__dirname, './fixtures/hugo-sample'), 'sample-app')
           .finalize();
 
         archive.pipe(archiveStream).on('finish', cb);
@@ -61,11 +61,12 @@ describe('integration-jekyll', function() {
         self.jekyll(self.sourceBundle, self.appId, self.versionId, function(err) {
           if (err) return cb(err);
 
-          assert.equal(5, self.settings.storage.writeStream.callCount);
+          // assert.equal(5, self.settings.storage.writeStream.callCount);
 
-          var expectedDeployedFiles = ['index.html', 'about/index.html',
-            'jekyll/update/2016/02/16/welcome-to-jekyll.html'];
+          var expectedDeployedFiles = ['index.html', 'post/hugoisforlovers/index.html',
+            'about/index.html'];
 
+          // debugger;
           // make assertions about what files were deployed.
           expectedDeployedFiles.forEach(function(filePath) {
             assert.isTrue(self.settings.storage.writeStream.calledWith(sinon.match({
@@ -78,29 +79,4 @@ describe('integration-jekyll', function() {
       }
     ], done);
   });
-
-  it('handles missing _config.yml', function(done) {
-    this.timeout(5000);
-    async.series([
-      function(cb) {
-        // Create a tarball of the jekyll-sample directory
-        var archiveStream = fs.createWriteStream(self.archivePath);
-        var archive = archiver.create('tar', {gzip: true})
-          .glob('jekyll-sample/**/*.*', {
-            ignore: '**/_config.yml',
-            cwd: path.join(__dirname, './fixtures')
-          })
-          .finalize();
-
-        archive.pipe(archiveStream).on('finish', cb);
-      },
-      function(cb) {
-        self.jekyll(self.sourceBundle, self.appId, self.versionId, cb);
-      }
-    ], done);
-  });
-
-  // it('handles invalid gem', function(done) {
-  //
-  // });
 });

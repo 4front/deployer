@@ -9,7 +9,7 @@ var winston = require('winston');
 
 require('dash-assert');
 
-describe('jekyll/install-gems', function() {
+describe('integration-install-gems', function() {
   var self;
   var logger;
 
