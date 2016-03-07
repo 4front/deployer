@@ -4,5 +4,4 @@ author = "Steve Francia"
 copyright = "Copyright (c) 2008 - 2014, Steve Francia; all rights reserved."
 canonifyurls = true
 paginate = 3
-
-
+theme = "allegiant"

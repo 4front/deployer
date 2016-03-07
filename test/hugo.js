@@ -37,7 +37,8 @@ describe('integration-hugo', function() {
         return fs.createReadStream(self.archivePath);
       },
       buildConfig: {
-        engine: 'hugo'
+        engine: 'hugo',
+        themeUrl: 'https://github.com/brycematheson/allegiant.git'
       }
     };
 

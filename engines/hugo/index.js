@@ -31,6 +31,9 @@ module.exports = function(settings) {
         common.unpackSourceBundle(params.readStream, params.sourceDirectory, cb);
       },
       function(cb) {
+        installTheme(params, cb);
+      },
+      function(cb) {
         runHugoBuild(params, cb);
       },
       function(cb) {
@@ -46,7 +49,7 @@ module.exports = function(settings) {
       },
       function(cb) {
         settings.logger.debug('deleting the temporary build directory');
-        // rimraf(params.buildDirectory, cb);
+        rimraf(params.buildDirectory, cb);
         cb();
       }
     ], function(err) {
@@ -66,7 +69,6 @@ module.exports = function(settings) {
       logger: params.logger,
       args: ['--source=source', '--destination=../output'],
       cwd: params.buildDirectory, // run the command from the temp directory
-      // Tack the temporary gem path onto the default gem path
       env: _.extend({}, process.env, {
       }, params.untrustedRoleEnv)
     };
@@ -77,5 +79,34 @@ module.exports = function(settings) {
       }
       callback();
     });
+  }
+
+  function installTheme(params, callback) {
+    if (!_.isString(params.buildConfig.themeUrl)) {
+      params.logger.debug('no themeUrl in buildConfig');
+      return callback();
+    }
+
+    var themesDirectory = path.join(params.sourceDirectory, 'themes');
+    async.series([
+      function(cb) {
+        // Ensure the themes directory exists
+        fs.ensureDir(themesDirectory, cb);
+      },
+      function(cb) {
+        var spawnParams = {
+          executable: 'git',
+          logger: params.logger,
+          args: ['clone', params.buildConfig.themeUrl],
+          cwd: themesDirectory, // run the command from the temp directory
+          env: _.extend({}, process.env, {
+          }, params.untrustedRoleEnv)
+        };
+
+        // If there is a themeUrl, git clone it to the themes directory
+        params.logger.info('cloning theme %s', params.buildConfig.themeUrl);
+        common.spawnProcess(spawnParams, cb);
+      }
+    ], callback);
   }
 };
