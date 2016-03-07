@@ -4,7 +4,12 @@ var path = require('path');
 var os = require('os');
 var fs = require('fs-extra');
 var rimraf = require('rimraf');
+var request = require('request');
+var zlib = require('zlib');
+var tar = require('tar');
 var common = require('../common');
+var gitHubUrl = require('github-url-to-object');
+var bitbucketUrl = require('bitbucket-url-to-object');
 
 module.exports = function(settings) {
   var deploy = require('../../lib/deploy')(settings);
@@ -28,10 +33,15 @@ module.exports = function(settings) {
         }, cb);
       },
       function(cb) {
+        settings.logger.debug('unpack bundle to %s', params.sourceDirectory);
         common.unpackSourceBundle(params.readStream, params.sourceDirectory, cb);
       },
       function(cb) {
-        installTheme(params, cb);
+        installTheme(params, function(err, themeName) {
+          if (err) return callback(err);
+          params.themeName = themeName;
+          cb();
+        });
       },
       function(cb) {
         runHugoBuild(params, cb);
@@ -64,10 +74,15 @@ module.exports = function(settings) {
 
   function runHugoBuild(params, callback) {
     settings.logger.info('running hugo build');
+    var hugoArgs = ['--source=source', '--destination=../output'];
+    if (params.themeName) {
+      hugoArgs.push('--theme=' + params.themeName);
+    }
+
     var spawnParams = {
       executable: params.hugoBinary,
       logger: params.logger,
-      args: ['--source=source', '--destination=../output'],
+      args: hugoArgs,
       cwd: params.buildDirectory, // run the command from the temp directory
       env: _.extend({}, process.env, {
       }, params.untrustedRoleEnv)
@@ -82,31 +97,63 @@ module.exports = function(settings) {
   }
 
   function installTheme(params, callback) {
-    if (!_.isString(params.buildConfig.themeUrl)) {
-      params.logger.debug('no themeUrl in buildConfig');
+    if (!_.isString(params.buildConfig.themeRepo)) {
+      params.logger.debug('no themeRepo in buildConfig');
       return callback();
     }
 
-    var themesDirectory = path.join(params.sourceDirectory, 'themes');
+    var themeUrlObject = gitHubUrl(params.buildConfig.themeRepo);
+    var themeDownloadUrl;
+
+    if (themeUrlObject) {
+      // The tarball_url redirects which messes up piping the response. Instead
+      // build it ourselves.
+      themeDownloadUrl = 'https://github.com/' + themeUrlObject.user + '/' +
+        themeUrlObject.repo + '/archive/' + themeUrlObject.branch + '.tar.gz';
+    }
+    if (!themeUrlObject) {
+      themeUrlObject = bitbucketUrl(params.buildConfig.themeUrl);
+      // https://bitbucket.org/dvonlehman/hugo-demo/get/master.tar.gz
+      themeDownloadUrl = themeUrlObject.tarball_url;
+    }
+
+    if (!themeUrlObject) {
+      return callback(new Error('The themeRepo must be either a GitHub or Bitbucket url.'));
+    }
+
+    var themeName = themeUrlObject.repo;
+    var themeDirectory = path.join(params.sourceDirectory, 'themes', themeName);
+
     async.series([
       function(cb) {
-        // Ensure the themes directory exists
-        fs.ensureDir(themesDirectory, cb);
+        // Blow away any existing theme directory
+        rimraf(path.join(params.sourceDirectory, 'themes'), cb);
       },
       function(cb) {
-        var spawnParams = {
-          executable: 'git',
-          logger: params.logger,
-          args: ['clone', params.buildConfig.themeUrl],
-          cwd: themesDirectory, // run the command from the temp directory
-          env: _.extend({}, process.env, {
-          }, params.untrustedRoleEnv)
-        };
-
+        // Ensure the themes directory exists
+        params.logger.debug('ensure themes directory exists');
+        fs.mkdirs(themeDirectory, cb);
+      },
+      function(cb) {
         // If there is a themeUrl, git clone it to the themes directory
-        params.logger.info('cloning theme %s', params.buildConfig.themeUrl);
-        common.spawnProcess(spawnParams, cb);
+        params.logger.info('downloading theme %s', themeDownloadUrl);
+
+        // Download and unpack the theme.
+        request.get(themeDownloadUrl)
+          .pipe(zlib.createGunzip())
+          .pipe(tar.Extract({  // eslint-disable-line
+            path: themeDirectory,
+            strip: 1 // skip past the root directory to the hard-coded theme name
+          }))
+          .on('error', function(err) {
+            cb(err);
+          })
+          .on('end', function() {
+            cb();
+          });
       }
-    ], callback);
+    ], function(err) {
+      callback(err, themeName);
+    });
   }
 };

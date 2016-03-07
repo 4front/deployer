@@ -38,7 +38,7 @@ describe('integration-hugo', function() {
       },
       buildConfig: {
         engine: 'hugo',
-        themeUrl: 'https://github.com/brycematheson/allegiant.git'
+        themeRepo: 'https://github.com/brycematheson/allegiant'
       }
     };
 
