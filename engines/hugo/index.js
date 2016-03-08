@@ -76,7 +76,7 @@ module.exports = function(settings) {
     var hugoArgs = [
       '--source=source',
       '--destination=../output',
-      '--baseURL=\"\"', // force baseURL to empty string
+      '--baseURL=', // force baseURL to be blank
       '--ignoreCache=true'
     ];
 
