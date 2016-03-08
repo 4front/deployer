@@ -7,6 +7,8 @@ var rimraf = require('rimraf');
 var request = require('request');
 var zlib = require('zlib');
 var tar = require('tar');
+var toml = require('toml');
+var yaml = require('js-yaml');
 var common = require('../common');
 var gitHubUrl = require('github-url-to-object');
 var bitbucketUrl = require('bitbucket-url-to-object');
@@ -44,6 +46,9 @@ module.exports = function(settings) {
         });
       },
       function(cb) {
+        modifyConfigFile(params, cb);
+      },
+      function(cb) {
         runHugoBuild(params, cb);
       },
       function(cb) {
@@ -76,18 +81,17 @@ module.exports = function(settings) {
     var hugoArgs = [
       '--source=source',
       '--destination=../output',
-      '--baseURL=', // force baseURL to be blank
       '--ignoreCache=true'
     ];
-
-    if (params.themeName) {
-      hugoArgs.push('--theme=' + params.themeName);
-    }
 
     var spawnParams = {
       executable: params.hugoBinary,
       logger: params.logger,
       args: hugoArgs,
+      stdioFilter: function(msg) {
+        // Filter out the ominous sounding baseurl warning. This is what we want.
+        return !/No 'baseurl' set in configuration or as a flag/.test(msg);
+      },
       cwd: params.buildDirectory, // run the command from the temp directory
       env: _.extend({}, process.env, {
       }, params.untrustedRoleEnv)
@@ -160,5 +164,83 @@ module.exports = function(settings) {
     ], function(err) {
       callback(err, themeName);
     });
+  }
+
+  function modifyConfigFile(params, callback) {
+    var hugoConfig;
+    var configFile;
+    var configContents;
+
+    // Look for the first config file
+    var configFiles = _.map(['config.toml', 'config.yml', 'config.json'], function(filename) {
+      return path.join(params.sourceDirectory, filename);
+    });
+
+    async.series([
+      function(cb) {
+        getFirstConfigFile(configFiles, function(err, file) {
+          if (err) return cb(err);
+          configFile = file;
+          cb();
+        });
+      },
+      function(cb) {
+        fs.readFile(configFile, function(err, data) {
+          if (err) return cb(err);
+          configContents = data.toString();
+          cb();
+        });
+      },
+      function(cb) {
+        try {
+          hugoConfig = parseConfigFile(configFile, configContents);
+        } catch (parseErr) {
+          cb(new Error('Cannot parse config file ' + configFile));
+        }
+
+        // Strip out the baseurl and set the theme if a themeName was found
+        hugoConfig = _.omit(hugoConfig, 'baseurl');
+        if (_.isString(params.themeName)) {
+          hugoConfig.theme = params.themeName;
+        }
+        cb();
+      },
+      function(cb) {
+        // Delete all the existing config files
+        settings.logger.debug('delete original config files');
+        async.each(configFiles, function(file, next) {
+          rimraf(file, next);
+        }, cb);
+      },
+      function(cb) {
+        settings.logger.debug('write updated config.json');
+        // Save the updated config as config.json
+        fs.writeFile(path.join(params.sourceDirectory, 'config.json'),
+          JSON.stringify(hugoConfig, null, 2), cb);
+      }
+    ], callback);
+  }
+
+  function getFirstConfigFile(configFiles, callback) {
+    async.detectSeries(configFiles, fs.exists, function(file) {
+      if (!file) return callback(new Error('No config file found (config.toml, config.yaml, or config.json)'));
+
+      settings.logger.debug('found config file %s', file);
+      callback(null, file);
+    });
+  }
+
+  function parseConfigFile(filePath, contents) {
+    var extname = path.extname(filePath);
+    var parser;
+    if (extname === '.toml') {
+      parser = toml.parse;
+    } else if (extname === '.yaml') {
+      parser = yaml.safeLoad;
+    } else {
+      parser = JSON.parse;
+    }
+
+    return parser(contents);
   }
 };

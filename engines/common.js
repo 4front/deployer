@@ -33,12 +33,20 @@ module.exports.spawnProcess = function(params, callback) {
   params.logger.debug('spawning process %s', executableBaseName);
   var process = spawn(params.executable, params.args, options);
   var processExited;
+
+  var log = function(func, data) {
+    var msg = data.toString();
+    if (msg.trim().length === 0) return;
+    if (_.isFunction(params.stdioFilter) && !params.stdioFilter(msg)) return;
+    params.logger[func](msg);
+  };
+
   process.stdout.on('data', function(data) {
-    params.logger.info(data.toString());
+    log('info', data);
   });
 
   process.stderr.on('data', function(data) {
-    params.logger.warn(data.toString());
+    log('warn', data);
   });
 
   process.on('error', function(err) {
