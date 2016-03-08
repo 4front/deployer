@@ -29,7 +29,6 @@ describe('integration-jekyll', function() {
 
     this.versionId = shortid.generate();
     this.appId = shortid.generate();
-
     this.archivePath = path.join(os.tmpdir(), this.versionId + '.tar.gz');
 
     this.sourceBundle = {

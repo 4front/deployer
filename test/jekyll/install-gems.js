@@ -4,6 +4,7 @@ var fs = require('fs');
 var sinon = require('sinon');
 var path = require('path');
 var os = require('os');
+var shortid = require('shortid');
 var assert = require('assert');
 var winston = require('winston');
 
@@ -15,7 +16,7 @@ describe('integration-install-gems', function() {
 
   beforeEach(function() {
     self = this;
-    this.buildDirectory = path.join(os.tmpdir(), Date.now().toString());
+    this.buildDirectory = path.join(os.tmpdir(), shortid.generate());
     this.sourceDirectory = path.join(this.buildDirectory, 'source');
 
     logger = new winston.Logger({transports: [new (winston.transports.Console)()]});

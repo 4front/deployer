@@ -104,6 +104,9 @@ describe('bundle', function() {
             versionId: versionId,
             appId: appId
           });
+        }),
+        listVersions: sinon.spy(function(appId, options, cb) {
+          cb(null, []);
         })
       }
     };
@@ -376,26 +379,36 @@ describe('bundle', function() {
           assert.equal(deployedVersion.status, 'timedOut');
           assert.isTrue(deployedVersion.fileCount < 3);
 
-          // assert.equal(2, deployedVersion.fileCount);
-          // assert.equal(2, self.mockDeploy.callCount);
-          //
-          // assert.isTrue(self.mockDeploy.calledWith(self.appId, self.versionId, sinon.match({
-          //   path: 'index.html'
-          // })));
-          //
-          // assert.isTrue(self.mockDeploy.calledWith(self.appId, self.versionId, sinon.match({
-          //   path: 'scripts/main.js'
-          // })));
-          //
-          // assert.isFalse(self.mockDeploy.calledWith(self.appId, self.versionId, sinon.match({
-          //   path: 'styles/main.css'
-          // })));
-          //
-          // assert.equal(deployedVersion.fileCount, 2);
-
           cb();
         });
       }
     ], done);
+  });
+
+  it('raises error if another build with same commit exists', function(done) {
+    var commit = uid.sync(10);
+    this.settings.database.listVersions = function(appId, opts, cb) {
+      cb(null, [{versionId: uid.sync(10), commit: commit}]);
+    };
+
+    this.bundle.commit = commit;
+
+    this.deployBundle(this.bundle, this.context, function(err) {
+      assert.isObject(err);
+      assert.equal(err.code, 'versionCommitExists');
+      done();
+    });
+  });
+
+  it('raises error if another version with initiated status', function(done) {
+    this.settings.database.listVersions = function(appId, opts, cb) {
+      cb(null, [{versionId: uid.sync(10), status: 'initiated'}]);
+    };
+
+    this.deployBundle(this.bundle, this.context, function(err) {
+      assert.isObject(err);
+      assert.equal(err.code, 'deploymentInProgress');
+      done();
+    });
   });
 });

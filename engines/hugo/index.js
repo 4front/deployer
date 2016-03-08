@@ -38,7 +38,7 @@ module.exports = function(settings) {
       },
       function(cb) {
         installTheme(params, function(err, themeName) {
-          if (err) return callback(err);
+          if (err) return cb(err);
           params.themeName = themeName;
           cb();
         });
@@ -60,7 +60,6 @@ module.exports = function(settings) {
       function(cb) {
         settings.logger.debug('deleting the temporary build directory');
         rimraf(params.buildDirectory, cb);
-        cb();
       }
     ], function(err) {
       if (err) {
@@ -74,7 +73,13 @@ module.exports = function(settings) {
 
   function runHugoBuild(params, callback) {
     settings.logger.info('running hugo build');
-    var hugoArgs = ['--source=source', '--destination=../output'];
+    var hugoArgs = [
+      '--source=source',
+      '--destination=../output',
+      '--baseURL=\"\"', // force baseURL to empty string
+      '--ignoreCache=true'
+    ];
+
     if (params.themeName) {
       hugoArgs.push('--theme=' + params.themeName);
     }
