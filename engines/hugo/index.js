@@ -195,7 +195,7 @@ module.exports = function(settings) {
         try {
           hugoConfig = parseConfigFile(configFile, configContents);
         } catch (parseErr) {
-          cb(new Error('Cannot parse config file ' + configFile));
+          return cb(new Error('Cannot parse config file ' + configFile));
         }
 
         // Force the baseurl to be a forward slash
