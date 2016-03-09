@@ -6,8 +6,10 @@ module.exports = function(settings) {
 
   if (!settings.storage) throw new Error('Missing storage option');
 
-  if (settings.localRuby === true) {
-    _.extend(settings, require('./local-ruby-config'));
+  if (settings.localMachine === true) {
+    _.extend(settings, require('./local-ruby-config'), {
+      hugoBinary: 'hugo'
+    });
   }
 
   _.defaults(settings, {
