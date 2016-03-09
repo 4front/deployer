@@ -198,8 +198,8 @@ module.exports = function(settings) {
           cb(new Error('Cannot parse config file ' + configFile));
         }
 
-        // Strip out the baseurl and set the theme if a themeName was found
-        hugoConfig = _.omit(hugoConfig, 'baseurl');
+        // Force the baseurl to be a forward slash
+        hugoConfig.baseurl = '/';
         if (_.isString(params.themeName)) {
           hugoConfig.theme = params.themeName;
         }
