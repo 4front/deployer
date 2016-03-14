@@ -13,6 +13,8 @@ var common = require('../common');
 var gitHubUrl = require('github-url-to-object');
 var bitbucketUrl = require('bitbucket-url-to-object');
 
+var BASEURL_PLACEHOLDER = 'https://__baseurl__';
+
 module.exports = function(settings) {
   var deploy = require('../../lib/deploy')(settings);
 
@@ -30,7 +32,8 @@ module.exports = function(settings) {
     async.series([
       function(cb) {
         settings.logger.debug('making temp build directory: %s', buildDirectory);
-        async.eachSeries([buildDirectory, params.sourceDirectory, params.outputDirectory], function(dir, next) {
+        var dirs = [buildDirectory, params.sourceDirectory, params.outputDirectory];
+        async.eachSeries(dirs, function(dir, next) {
           fs.mkdir(dir, next);
         }, cb);
       },
@@ -198,8 +201,8 @@ module.exports = function(settings) {
           return cb(new Error('Cannot parse config file ' + configFile));
         }
 
-        // Force the baseurl to be a forward slash
-        hugoConfig.baseurl = '/';
+        // Force the baseurl to be the placeholder value
+        hugoConfig.baseurl = BASEURL_PLACEHOLDER;
         if (_.isString(params.themeName)) {
           hugoConfig.theme = params.themeName;
         }
@@ -223,7 +226,10 @@ module.exports = function(settings) {
 
   function getFirstConfigFile(configFiles, callback) {
     async.detectSeries(configFiles, fs.exists, function(file) {
-      if (!file) return callback(new Error('No config file found (config.toml, config.yaml, or config.json)'));
+      if (!file) {
+        return callback(new Error('No config file found (config.toml, ' +
+          'config.yaml, or config.json)'));
+      }
 
       settings.logger.debug('found config file %s', file);
       callback(null, file);

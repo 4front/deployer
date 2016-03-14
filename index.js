@@ -7,6 +7,7 @@ module.exports = function(settings) {
   if (!settings.storage) throw new Error('Missing storage option');
 
   if (settings.localMachine === true) {
+    debug('use local machine build runtimes');
     _.extend(settings, require('./local-ruby-config'), {
       hugoBinary: 'hugo'
     });
