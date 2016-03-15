@@ -55,6 +55,10 @@ module.exports = function(settings) {
         runHugoBuild(params, cb);
       },
       function(cb) {
+        // Copy the package.json to the build output directory
+        common.copyPackageJsonToOutput(params, cb);
+      },
+      function(cb) {
         // Recursively deploy the entire destDirectory
         settings.logger.info('deploying compiled hugo site');
         var directoryInfo = {type: 'Directory', path: params.outputDirectory};

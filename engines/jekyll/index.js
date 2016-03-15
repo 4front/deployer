@@ -44,6 +44,10 @@ module.exports = function(settings) {
         runJekyllBuild(params, cb);
       },
       function(cb) {
+        // Copy the package.json to the build output directory
+        common.copyPackageJsonToOutput(params, cb);
+      },
+      function(cb) {
         // Recursively deploy the entire destDirectory
         settings.logger.info('deploying compiled jekyll site');
         var directoryInfo = {type: 'Directory',

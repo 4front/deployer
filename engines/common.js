@@ -1,6 +1,6 @@
 var zlib = require('zlib');
 var tar = require('tar');
-var fs = require('fs');
+var fs = require('fs-extra');
 var path = require('path');
 var _ = require('lodash');
 var spawn = require('child_process').spawn;
@@ -65,6 +65,16 @@ module.exports.spawnProcess = function(params, callback) {
       params.logger.info(executableBaseName + ' complete');
       callback();
     }
+  });
+};
+
+module.exports.copyPackageJsonToOutput = function(params, callback) {
+  // Copy the package.json to the build output directory
+  var src = path.join(params.sourceDirectory, 'package.json');
+  var dest = path.join(params.outputDirectory, 'package.json');
+  fs.copy(src, dest, function(err) {
+    // Just eat any error
+    callback();
   });
 };
 
