@@ -91,7 +91,6 @@ module.exports = function(settings) {
       uploadsStarted++;
       deploy(appId, versionId, deployFile, function(err) {
         if (err) {
-          debugger;
           debug('deploy error for file %s', deployFile.path);
           settings.logger.warn('error deploying file %s: %o', deployFile.path, err.stack);
           callbackCalled = true;

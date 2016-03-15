@@ -19,12 +19,14 @@ module.exports = function(settings) {
       sourceDirectory: path.join(buildDirectory, 'source'),
       outputDirectory: path.join(buildDirectory, '_site'),
       logger: settings.logger
-    }, _.pick(settings, 'logger', 'rubyPath', 'rubyVersion', 'systemGemPath', 'defaultJekyllVersion'));
+    }, _.pick(settings, 'logger', 'rubyPath', 'rubyVersion',
+      'systemGemPath', 'defaultJekyllVersion'));
 
     async.series([
       function(cb) {
         settings.logger.debug('making temp build directory: %s', buildDirectory);
-        async.eachSeries([buildDirectory, params.sourceDirectory, params.outputDirectory], function(dir, next) {
+        var dirs = [buildDirectory, params.sourceDirectory, params.outputDirectory];
+        async.eachSeries(dirs, function(dir, next) {
           fs.mkdir(dir, next);
         }, cb);
       },
@@ -44,7 +46,8 @@ module.exports = function(settings) {
       function(cb) {
         // Recursively deploy the entire destDirectory
         settings.logger.info('deploying compiled jekyll site');
-        var directoryInfo = {type: 'Directory', path: params.outputDirectory, fileFilter: '!Gemfile*'};
+        var directoryInfo = {type: 'Directory',
+          path: params.outputDirectory, fileFilter: '!Gemfile*'};
 
         deploy(appId, versionId, directoryInfo, function(err, results) {
           if (err) return cb(err);
