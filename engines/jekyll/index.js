@@ -2,7 +2,6 @@ var _ = require('lodash');
 var async = require('async');
 var path = require('path');
 var os = require('os');
-var fs = require('fs-extra');
 var rimraf = require('rimraf');
 var common = require('../common');
 var installGems = require('./lib/install-gems');
@@ -15,23 +14,16 @@ module.exports = function(settings) {
 
     var buildDirectory = path.join(os.tmpdir(), versionId);
     var params = _.extend({}, sourceBundle, {
-      buildDirectory: buildDirectory,
-      sourceDirectory: path.join(buildDirectory, 'source'),
-      outputDirectory: path.join(buildDirectory, '_site'),
-      logger: settings.logger
+      buildDirectory: buildDirectory
     }, _.pick(settings, 'logger', 'rubyPath', 'rubyVersion',
       'systemGemPath', 'defaultJekyllVersion'));
 
     async.series([
       function(cb) {
-        settings.logger.debug('making temp build directory: %s', buildDirectory);
-        var dirs = [buildDirectory, params.sourceDirectory, params.outputDirectory];
-        async.eachSeries(dirs, function(dir, next) {
-          fs.mkdir(dir, next);
-        }, cb);
+        common.makeTempDirs(params, cb);
       },
       function(cb) {
-        common.unpackSourceBundle(params.readStream, params.sourceDirectory, cb);
+        common.unpackSourceBundle(params, cb);
       },
       function(cb) {
         installGems(params, function(err, localGemsDirectory) {
@@ -76,11 +68,19 @@ module.exports = function(settings) {
   function runJekyllBuild(params, callback) {
     var jekyllExecutable = path.join(params.rubyPath, 'jekyll');
 
+    var jekyllArgs = [
+      'build',
+      '--source',
+      params.sourceDirectory,
+      '--destination',
+      params.outputDirectory
+    ];
+
     settings.logger.info('running jekyll build');
     var spawnParams = {
       executable: jekyllExecutable,
       logger: params.logger,
-      args: ['build', '--source', 'source', '--destination', '_site'],
+      args: jekyllArgs,
       cwd: params.buildDirectory, // run the command from the temp directory
       // Tack the temporary gem path onto the default gem path
       env: _.extend({}, process.env, {

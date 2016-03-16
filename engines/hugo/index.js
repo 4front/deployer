@@ -22,24 +22,18 @@ module.exports = function(settings) {
     settings.logger.info('start hugo deployment');
 
     var buildDirectory = path.join(os.tmpdir(), versionId);
-    var params = _.extend({}, sourceBundle, {
+    var params = _.assign({}, sourceBundle, {
       buildDirectory: buildDirectory,
-      sourceDirectory: path.join(buildDirectory, 'source'),
-      outputDirectory: path.join(buildDirectory, 'output'),
-      logger: settings.logger
+      appId: appId,
+      versionId: versionId,
     }, _.pick(settings, 'logger', 'hugoBinary'));
 
     async.series([
       function(cb) {
-        settings.logger.debug('making temp build directory: %s', buildDirectory);
-        var dirs = [buildDirectory, params.sourceDirectory, params.outputDirectory];
-        async.eachSeries(dirs, function(dir, next) {
-          fs.mkdir(dir, next);
-        }, cb);
+        common.makeTempDirs(params, cb);
       },
       function(cb) {
-        settings.logger.debug('unpack bundle to %s', params.sourceDirectory);
-        common.unpackSourceBundle(params.readStream, params.sourceDirectory, cb);
+        common.unpackSourceBundle(params, cb);
       },
       function(cb) {
         installTheme(params, function(err, themeName) {

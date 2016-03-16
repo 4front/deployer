@@ -13,13 +13,12 @@ var winston = require('winston');
 winston.level = 'debug';
 require('dash-assert');
 
-describe('integration-hugo', function() {
+describe('integration-wintersmith', function() {
   var self;
   beforeEach(function() {
     self = this;
 
     this.settings = _.extend({}, {
-      hugoBinary: 'hugo',
       logger: winston,
       storage: {
         writeStream: sinon.spy(function(params, callback) {
@@ -35,17 +34,13 @@ describe('integration-hugo', function() {
     this.sourceBundle = {
       readStream: function() {
         return fs.createReadStream(self.archivePath);
-      },
-      buildConfig: {
-        engine: 'hugo',
-        themeRepo: 'https://github.com/brycematheson/allegiant'
       }
     };
 
-    this.hugo = require('../engines/hugo')(this.settings);
+    this.wintersmith = require('../engines/wintersmith')(this.settings);
   });
 
-  it('builds hugo-sample', function(done) {
+  it('builds wintersmith-sample', function(done) {
     this.timeout(30000);
 
     async.series([
@@ -53,21 +48,20 @@ describe('integration-hugo', function() {
         // Create a tarball of the hugo-sample directory
         var archiveStream = fs.createWriteStream(self.archivePath);
         var archive = archiver.create('tar', {gzip: true})
-          .directory(path.join(__dirname, './fixtures/hugo-sample'), 'sample-app')
+          .directory(path.join(__dirname, './fixtures/wintersmith-sample'), 'sample-app')
           .finalize();
 
         archive.pipe(archiveStream).on('finish', cb);
       },
       function(cb) {
-        self.hugo(self.sourceBundle, self.appId, self.versionId, function(err) {
+        self.wintersmith(self.sourceBundle, self.appId, self.versionId, function(err) {
           if (err) return cb(err);
 
-          // assert.equal(5, self.settings.storage.writeStream.callCount);
+          var expectedDeployedFiles = [
+            'index.html',
+            'articles/bamboo-cutter/index.html',
+            'css/main.css'];
 
-          var expectedDeployedFiles = ['index.html', 'post/hugoisforlovers/index.html',
-            'about/index.html'];
-
-          // debugger;
           // make assertions about what files were deployed.
           expectedDeployedFiles.forEach(function(filePath) {
             assert.isTrue(self.settings.storage.writeStream.calledWith(sinon.match({
