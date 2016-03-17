@@ -78,6 +78,14 @@ module.exports = function(settings) {
           // If the plugin has an extname, then nothing to install.
           if (!_.isEmpty(path.extname(plugin))) return next();
 
+          // Some of the plugins instruct setting the plugin path
+          // to the node_modules directory rather than just the plain
+          // module name.
+          var match = plugin.match(/\/node_modules\/(.*)\//);
+          if (match && match.length > 1) {
+            plugin = match[1];
+          }
+
           common.runNpmInstall(params, plugin, next);
         }, cb);
       }
