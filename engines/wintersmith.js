@@ -81,7 +81,7 @@ module.exports = function(settings) {
           // Some of the plugins instruct setting the plugin path
           // to the node_modules directory rather than just the plain
           // module name.
-          var match = plugin.match(/\/node_modules\/(.*)\//);
+          var match = plugin.match(/\/node_modules\/(.*?)\/?$/);
           if (match && match.length > 1) {
             plugin = match[1];
           }
