@@ -27,6 +27,9 @@ module.exports = function(settings) {
         common.unpackSourceBundle(params, cb);
       },
       function(cb) {
+        common.runNpmInstall(params, 'wintersmith', cb);
+      },
+      function(cb) {
         common.runNpmInstall(params, cb);
       },
       function(cb) {
@@ -100,7 +103,7 @@ module.exports = function(settings) {
     ];
 
     var spawnParams = {
-      executable: path.join(__dirname, '../node_modules/.bin/wintersmith'),
+      executable: path.join(params.sourceDirectory, 'node_modules/.bin/wintersmith'),
       logger: params.logger,
       args: args,
       stdioFilter: function() {

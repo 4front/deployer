@@ -41,7 +41,7 @@ describe('integration-wintersmith', function() {
   });
 
   it('builds wintersmith-sample', function(done) {
-    this.timeout(30000);
+    this.timeout(60000);
 
     async.series([
       function(cb) {
