@@ -99,7 +99,7 @@ module.exports.runNpmInstall = function(params, moduleName, callback) {
   if (moduleName) npmArgs.push(moduleName);
 
   var spawnArgs = {
-    executable: path.join(__dirname, '../node_modules/.bin/npm'),
+    executable: params.npmExecutable,
     logger: params.logger,
     args: npmArgs,
     stdioFilter: function() {

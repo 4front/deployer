@@ -17,7 +17,7 @@ module.exports = function(settings) {
       buildDirectory: buildDirectory,
       appId: appId,
       versionId: versionId,
-    }, _.pick(settings, 'logger'));
+    }, _.pick(settings, 'logger', 'wintersmithExecutable', 'npmExecutable'));
 
     async.series([
       function(cb) {
@@ -25,9 +25,6 @@ module.exports = function(settings) {
       },
       function(cb) {
         common.unpackSourceBundle(params, cb);
-      },
-      function(cb) {
-        common.runNpmInstall(params, 'wintersmith', cb);
       },
       function(cb) {
         common.runNpmInstall(params, cb);
@@ -96,14 +93,14 @@ module.exports = function(settings) {
   }
 
   function runWintersmithBuild(params, callback) {
-    settings.logger.info('running hugo build');
+    settings.logger.info('running wintersmith build');
     var args = [
       'build',
       '--output', params.outputDirectory
     ];
 
     var spawnParams = {
-      executable: path.join(params.sourceDirectory, 'node_modules/.bin/wintersmith'),
+      executable: params.wintersmithExecutable,
       logger: params.logger,
       args: args,
       stdioFilter: function() {

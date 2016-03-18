@@ -20,6 +20,8 @@ describe('integration-wintersmith', function() {
 
     this.settings = _.extend({}, {
       logger: winston,
+      npmExecutable: 'npm',
+      wintersmithExecutable: 'wintersmith',
       storage: {
         writeStream: sinon.spy(function(params, callback) {
           callback();
