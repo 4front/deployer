@@ -1,4 +1,5 @@
-var _ = require('lodash');
+var assign = require('lodash.assign');
+var defaults = require('lodash.defaults');
 var debug = require('debug')('4front:deployer');
 
 module.exports = function(settings) {
@@ -8,12 +9,12 @@ module.exports = function(settings) {
 
   if (settings.localMachine === true) {
     debug('use local machine build runtimes');
-    _.extend(settings, require('./local-ruby-config'), {
+    assign(settings, require('./local-ruby-config'), {
       hugoBinary: 'hugo'
     });
   }
 
-  _.defaults(settings, {
+  defaults(settings, {
     defaultMaxAge: 31557600 // one year
   });
 

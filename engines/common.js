@@ -3,7 +3,10 @@ var tar = require('tar');
 var async = require('async');
 var fs = require('fs-extra');
 var path = require('path');
-var _ = require('lodash');
+var assign = require('lodash.assign');
+var isFunction = require('lodash.isfunction');
+var isNumber = require('lodash.isnumber');
+var pick = require('lodash.pick');
 var spawn = require('child_process').spawn;
 
 require('simple-errors');
@@ -13,7 +16,7 @@ module.exports.loadPackageJson = loadPackageJson;
 // Make the temp build directory and the source and output
 // sub-directories.
 module.exports.makeTempDirs = function(params, callback) {
-  _.assign(params, {
+  assign(params, {
     sourceDirectory: path.join(params.buildDirectory, 'source'),
     outputDirectory: path.join(params.buildDirectory, 'output')
   });
@@ -56,17 +59,6 @@ module.exports.copyPackageJsonToOutput = function(params, callback) {
   });
 };
 
-// module.exports.loadExtraBuildOptions = function(params, callback) {
-//   loadPackageJson(params, function(err, packageJson) {
-//     if (err) return callback(err);
-//
-//     var manifest = packageJson[params.packageJsonManifestKey];
-//     if (!_.isObject(manifest) || !_.isObject(manifest.build)) return callback();
-//
-//     callback(null, _.omit(manifest.build, 'engine'));
-//   });
-// };
-
 function loadPackageJson(params, callback) {
   fs.readFile(path.join(params.sourceDirectory, 'package.json'), function(err, data) {
     if (err) {
@@ -88,7 +80,7 @@ function loadPackageJson(params, callback) {
 }
 
 module.exports.runNpmInstall = function(params, moduleName, callback) {
-  if (_.isFunction(moduleName)) {
+  if (isFunction(moduleName)) {
     callback = moduleName;
     moduleName = null;
   }
@@ -107,7 +99,7 @@ module.exports.runNpmInstall = function(params, moduleName, callback) {
       return false;
     },
     cwd: params.sourceDirectory, // run the command from the temp directory
-    env: _.extend({}, process.env, {
+    env: assign({}, process.env, {
     }, params.untrustedRoleEnv)
   };
 
@@ -120,7 +112,7 @@ module.exports.runNpmInstall = function(params, moduleName, callback) {
 };
 
 function spawnProcess(params, callback) {
-  var options = _.pick(params, 'cwd', 'env');
+  var options = pick(params, 'cwd', 'env');
   options.stdio = 'pipe';
 
   var executableBaseName = path.basename(params.executable);
@@ -131,7 +123,7 @@ function spawnProcess(params, callback) {
   var log = function(func, data) {
     var msg = data.toString();
     if (msg.trim().length === 0) return;
-    if (_.isFunction(params.stdioFilter) && !params.stdioFilter(msg)) return;
+    if (isFunction(params.stdioFilter) && !params.stdioFilter(msg)) return;
     params.logger[func](msg);
   };
 
@@ -153,7 +145,7 @@ function spawnProcess(params, callback) {
   process.on('exit', function(code) {
     if (processExited) return;
     processExited = true;
-    if (_.isNumber(code) && code !== 0) {
+    if (isNumber(code) && code !== 0) {
       callback(Error.create('Process ' + executableBaseName + ' failed', {code: code}));
     } else {
       params.logger.info(executableBaseName + ' complete');

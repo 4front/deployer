@@ -1,9 +1,12 @@
-var _ = require('lodash');
 var async = require('async');
 var path = require('path');
 var os = require('os');
 var fs = require('fs-extra');
 var rimraf = require('rimraf');
+var assign = require('lodash.assign');
+var pick = require('lodash.pick');
+var isArray = require('lodash.isarray');
+var isEmpty = require('lodash.isempty');
 var common = require('./common');
 
 module.exports = function(settings) {
@@ -13,11 +16,11 @@ module.exports = function(settings) {
     settings.logger.info('start wintersmith deployment');
 
     var buildDirectory = path.join(os.tmpdir(), versionId);
-    var params = _.assign({}, sourceBundle, {
+    var params = assign({}, sourceBundle, {
       buildDirectory: buildDirectory,
       appId: appId,
       versionId: versionId,
-    }, _.pick(settings, 'logger', 'wintersmithExecutable', 'npmExecutable'));
+    }, pick(settings, 'logger', 'wintersmithExecutable', 'npmExecutable'));
 
     async.series([
       function(cb) {
@@ -71,12 +74,12 @@ module.exports = function(settings) {
         fs.readJson(path.join(params.sourceDirectory, 'config.json'), cb);
       },
       function(config, cb) {
-        if (!_.isArray(config.plugins)) return cb();
+        if (!isArray(config.plugins)) return cb();
         params.logger.info('installing wintersmith plugins');
         async.each(config.plugins, function(plugin, next) {
           // Plugins come in two flavors: npm modules and local files.
           // If the plugin has an extname, then nothing to install.
-          if (!_.isEmpty(path.extname(plugin))) return next();
+          if (!isEmpty(path.extname(plugin))) return next();
 
           // Some of the plugins instruct setting the plugin path
           // to the node_modules directory rather than just the plain
@@ -108,7 +111,7 @@ module.exports = function(settings) {
         return true;
       },
       cwd: params.sourceDirectory, // run the command from the source directory
-      env: _.extend({}, process.env, {
+      env: assign({}, process.env, {
       }, params.untrustedRoleEnv)
     };
 

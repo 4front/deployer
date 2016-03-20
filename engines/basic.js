@@ -1,8 +1,8 @@
 var async = require('async');
-var _ = require('lodash');
 var tar = require('tar');
 var zlib = require('zlib');
 var path = require('path');
+var isFunction = require('lodash.isfunction');
 var debug = require('debug')('4front:deployer:basic');
 
 var blackListedExtensions = ['php', 'asp'];
@@ -72,7 +72,7 @@ module.exports = function(settings) {
         return;
       }
 
-      if (_.isFunction(sourceBundle.shouldStop)) {
+      if (isFunction(sourceBundle.shouldStop)) {
         // Check if the bundle stop deploying any additional files.
         if (sourceBundle.shouldStop(entry) === true) {
           // Set the deploymentStopped property, force the end of the stream,

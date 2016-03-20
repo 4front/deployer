@@ -1,5 +1,5 @@
 var assert = require('assert');
-var _ = require('lodash');
+var assign = require('lodash.assign');
 var sinon = require('sinon');
 var uid = require('uid-safe');
 
@@ -16,7 +16,7 @@ describe('version', function() {
       virtualHost: '4fronthost.com',
       database: {
         createVersion: sinon.spy(function(data, callback) {
-          callback(null, _.extend(data, {complete: false}));
+          callback(null, assign(data, {complete: false}));
         }),
         nextVersionNum: sinon.spy(function(appId, callback) {
           callback(null, self.nextVersionNum);
@@ -169,7 +169,8 @@ describe('version', function() {
 
         assert.isFalse(self.settings.database.updateTrafficRules.called);
         assert.isFalse(self.settings.virtualAppRegistry.flushApp.called);
-        assert.equal(version.previewUrl, self.context.virtualApp.url + '?_version=' + versionData.versionId);
+        assert.equal(version.previewUrl, self.context.virtualApp.url +
+          '?_version=' + versionData.versionId);
 
         done();
       });
@@ -215,9 +216,12 @@ describe('version', function() {
 
     this.versions.delete(versionId, this.context, function(err) {
       if (err) return done(err);
-      assert.isTrue(self.settings.database.getVersion.calledWith(self.context.virtualApp.appId, versionId));
-      assert.isTrue(self.settings.database.deleteVersion.calledWith(self.context.virtualApp.appId, versionId));
-      assert.isTrue(self.settings.storage.deleteFiles.calledWith(self.context.virtualApp.appId + '/' + versionId));
+      assert.isTrue(self.settings.database.getVersion.calledWith(
+        self.context.virtualApp.appId, versionId));
+      assert.isTrue(self.settings.database.deleteVersion.calledWith(
+        self.context.virtualApp.appId, versionId));
+      assert.isTrue(self.settings.storage.deleteFiles.calledWith(
+        self.context.virtualApp.appId + '/' + versionId));
 
       done();
     });
@@ -255,7 +259,8 @@ describe('version', function() {
     this.versions.deleteOldest(self.context, 2, function(err) {
       if (err) return done(err);
 
-      assert.isTrue(self.settings.database.listVersions.calledWith(appId, {excludeIncomplete: false}));
+      assert.isTrue(self.settings.database.listVersions.calledWith(
+        appId, {excludeIncomplete: false}));
       assert.equal(2, self.settings.database.deleteVersion.callCount);
       assert.isTrue(self.settings.database.deleteVersion.calledWith(appId, 'e'));
       assert.isTrue(self.settings.database.deleteVersion.calledWith(appId, 'b'));

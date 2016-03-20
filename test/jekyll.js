@@ -3,7 +3,7 @@ var assert = require('assert');
 var shortid = require('shortid');
 var fs = require('fs');
 var os = require('os');
-var _ = require('lodash');
+var assign = require('lodash.assign');
 var path = require('path');
 var archiver = require('archiver');
 var sinon = require('sinon');
@@ -18,7 +18,7 @@ describe('integration-jekyll', function() {
   beforeEach(function() {
     self = this;
 
-    this.settings = _.extend({}, require('../local-ruby-config'), {
+    this.settings = assign({}, require('../local-ruby-config'), {
       logger: winston,
       storage: {
         writeStream: sinon.spy(function(params, callback) {

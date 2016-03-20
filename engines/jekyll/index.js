@@ -1,4 +1,5 @@
-var _ = require('lodash');
+var assign = require('lodash.assign');
+var pick = require('lodash.pick');
 var async = require('async');
 var path = require('path');
 var os = require('os');
@@ -13,9 +14,9 @@ module.exports = function(settings) {
     settings.logger.info('start jekyll deployment');
 
     var buildDirectory = path.join(os.tmpdir(), versionId);
-    var params = _.extend({}, sourceBundle, {
+    var params = assign({}, sourceBundle, {
       buildDirectory: buildDirectory
-    }, _.pick(settings, 'logger', 'rubyPath', 'rubyVersion',
+    }, pick(settings, 'logger', 'rubyPath', 'rubyVersion',
       'systemGemPath', 'defaultJekyllVersion'));
 
     async.series([
@@ -83,7 +84,7 @@ module.exports = function(settings) {
       args: jekyllArgs,
       cwd: params.buildDirectory, // run the command from the temp directory
       // Tack the temporary gem path onto the default gem path
-      env: _.extend({}, process.env, {
+      env: assign({}, process.env, {
         GEM_PATH: params.systemGemPath + ':' + params.localGemsDirectory
       }, params.untrustedRoleEnv)
     };

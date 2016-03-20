@@ -2,7 +2,8 @@ var async = require('async');
 var fs = require('fs-extra');
 var path = require('path');
 var debug = require('debug')('4front:deployer:jekyll:gems');
-var _ = require('lodash');
+var isArray = require('lodash.isarray');
+var assign = require('lodash.assign');
 var yaml = require('js-yaml');
 var common = require('../../common');
 
@@ -27,7 +28,7 @@ module.exports = function(params, callback) {
 };
 
 function gemInstallPlugins(params, jekyllConfig, localGemsDirectory, callback) {
-  if (!_.isArray(jekyllConfig.gems) || jekyllConfig.gems.length === 0) {
+  if (!isArray(jekyllConfig.gems) || jekyllConfig.gems.length === 0) {
     params.logger.debug('no gems array in _config.yml');
     return callback();
   }
@@ -53,7 +54,7 @@ function gemInstallPlugins(params, jekyllConfig, localGemsDirectory, callback) {
         '--force',
         '--conservative'],
       logger: params.logger,
-      env: _.extend({}, process.env, {
+      env: assign({}, process.env, {
         GEM_PATH: params.systemGemPath + ':' + localGemsDirectory
       }, params.untrustedRoleEnv)
     };

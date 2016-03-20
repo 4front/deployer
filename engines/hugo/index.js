@@ -1,4 +1,6 @@
-var _ = require('lodash');
+var assign = require('lodash.assign');
+var pick = require('lodash.pick');
+var isString = require('lodash.isstring');
 var async = require('async');
 var path = require('path');
 var os = require('os');
@@ -22,11 +24,11 @@ module.exports = function(settings) {
     settings.logger.info('start hugo deployment');
 
     var buildDirectory = path.join(os.tmpdir(), versionId);
-    var params = _.assign({}, sourceBundle, {
+    var params = assign({}, sourceBundle, {
       buildDirectory: buildDirectory,
       appId: appId,
       versionId: versionId,
-    }, _.pick(settings, 'logger', 'hugoBinary'));
+    }, pick(settings, 'logger', 'hugoBinary'));
 
     async.series([
       function(cb) {
@@ -94,7 +96,7 @@ module.exports = function(settings) {
         return !/No 'baseurl' set in configuration or as a flag/.test(msg);
       },
       cwd: params.buildDirectory, // run the command from the temp directory
-      env: _.extend({}, process.env, {
+      env: assign({}, process.env, {
       }, params.untrustedRoleEnv)
     };
 
@@ -107,7 +109,7 @@ module.exports = function(settings) {
   }
 
   function installTheme(params, callback) {
-    if (!_.isString(params.buildConfig.themeRepo)) {
+    if (!isString(params.buildConfig.themeRepo)) {
       params.logger.debug('no themeRepo in buildConfig');
       return callback();
     }
@@ -173,7 +175,7 @@ module.exports = function(settings) {
     var configContents;
 
     // Look for the first config file
-    var configFiles = _.map(['config.toml', 'config.yml', 'config.json'], function(filename) {
+    var configFiles = ['config.toml', 'config.yml', 'config.json'].map(function(filename) {
       return path.join(params.sourceDirectory, filename);
     });
 
@@ -201,7 +203,7 @@ module.exports = function(settings) {
 
         // Force the baseurl to be the placeholder value
         hugoConfig.baseurl = BASEURL_PLACEHOLDER;
-        if (_.isString(params.themeName)) {
+        if (isString(params.themeName)) {
           hugoConfig.theme = params.themeName;
         }
         cb();
