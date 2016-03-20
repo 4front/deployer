@@ -1,5 +1,5 @@
-var _ = require('lodash');
 var async = require('async');
+var assign = require('lodash.assign');
 var fs = require('fs');
 var path = require('path');
 var uid = require('uid-safe');
@@ -57,7 +57,7 @@ describe('bundle', function() {
     };
 
     this.context = {
-      user: { userId: uid.sync(10) },
+      user: {userId: uid.sync(10)},
       virtualApp: {appId: this.appId},
       organization: {orgId: uid.sync(10)}
     };
@@ -67,9 +67,9 @@ describe('bundle', function() {
       message: 'commit message'
     };
 
-    _.extend(this.mockVersions, {
+    assign(this.mockVersions, {
       create: sinon.spy(function(versionData, context, callback) {
-        callback(null, _.extend(versionData, {
+        callback(null, assign(versionData, {
           versionId: self.versionId,
           status: 'initiated'
         }));
@@ -177,7 +177,7 @@ describe('bundle', function() {
         // Create the temp sample app archive. This time nest the files in an
         // additional "dist" directory.
         var archive = archiver.create('tar', {gzip: true})
-          .append(new Buffer('string'), { name: 'sample-app/ignore.html' })
+          .append(new Buffer('string'), {name: 'sample-app/ignore.html'})
           .directory(path.join(__dirname, './fixtures/sample-app'), 'sample-app/dist')
           .finalize();
 
@@ -218,7 +218,7 @@ describe('bundle', function() {
         // Create the temp sample app archive. This time nest the files in an
         // additional "dist" directory.
         var archive = archiver.create('tar', {gzip: true})
-          .append(new Buffer('string'), { name: 'sample-app/BE/ignore.html' })
+          .append(new Buffer('string'), {name: 'sample-app/BE/ignore.html'})
           .directory(path.join(__dirname, './fixtures/sample-app'), 'sample-app/FE/public')
           .finalize();
 
@@ -319,7 +319,7 @@ describe('bundle', function() {
         // additional "dist" directory.
         var archive = archiver.create('tar', {gzip: true})
           .append(new Buffer('string'), {name: 'hello.php'})
-          .append(new Buffer('string'), {name: 'index.html' })
+          .append(new Buffer('string'), {name: 'index.html'})
           .finalize();
 
         archive.pipe(self.sampleArchive);
@@ -350,7 +350,7 @@ describe('bundle', function() {
   });
 
   it('deployment times out', function(done) {
-    _.extend(self.bundle, {
+    assign(self.bundle, {
       shouldStop: function(entry) {
         return entry.path === 'styles/main.css';
       },
@@ -362,7 +362,7 @@ describe('bundle', function() {
     async.series([
       function(cb) {
         var tarball = archiver.create('tar', {gzip: true})
-          .append('<html/>', { name: 'root/index.html' })
+          .append('<html/>', {name: 'root/index.html'})
           .append('function(){}', {name: 'root/scripts/main.js'})
           .append('body{}', {name: 'root/styles/main.css'})
           .finalize();

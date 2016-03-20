@@ -23,7 +23,7 @@ describe('manifest', function() {
       }]
     };
 
-    var manifestString = JSON.stringify({ '_virtualApp': manifestJson});
+    var manifestString = JSON.stringify({_virtualApp: manifestJson});
 
     manifest(manifestString, function(err, json) {
       assert.deepEqual(json, manifestJson);
@@ -38,15 +38,16 @@ describe('manifest', function() {
     });
   });
 
-  it('uses default manifest for malformed package.json', function(done) {
-    manifest('not_really_json', function(err, json) {
-      assert.deepEqual(json, manifest.defaultManifest);
+  it('throws error for malformed package.json', function(done) {
+    manifest('not_really_json', function(err) {
+      assert.ok(err);
+      assert.equal(err.code, 'malformedPackageJson');
       done();
     });
   });
 
   it('uses default manifest for missing _virtualApp', function(done) {
-    manifest("{'name': 'foo'}", function(err, json) {
+    manifest(JSON.stringify({name: 'foo'}), function(err, json) {
       assert.deepEqual(json, manifest.defaultManifest);
       done();
     });
@@ -56,7 +57,7 @@ describe('manifest', function() {
     var manifestJson = {foo: 1};
 
     var options = {propertyName: '_custom_'};
-    manifest(JSON.stringify({'_custom_': manifestJson}), options, function(err, json) {
+    manifest(JSON.stringify({_custom_: manifestJson}), options, function(err, json) {
       assert.deepEqual(json, manifestJson);
       done();
     });
@@ -66,7 +67,7 @@ describe('manifest', function() {
     var manifestJson = {foo: 1};
 
     var options = {propertyName: '_custom_'};
-    manifest(JSON.stringify({'_virtualApp': manifestJson}), options, function(err, json) {
+    manifest(JSON.stringify({_virtualApp: manifestJson}), options, function(err, json) {
       assert.deepEqual(json, manifestJson);
       done();
     });

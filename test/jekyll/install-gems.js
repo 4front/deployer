@@ -1,5 +1,5 @@
 var installGems = require('../../engines/jekyll/lib/install-gems');
-var _ = require('lodash');
+var assign = require('lodash.assign');
 var fs = require('fs');
 var sinon = require('sinon');
 var path = require('path');
@@ -21,7 +21,7 @@ describe('integration-install-gems', function() {
 
     logger = new winston.Logger({transports: [new (winston.transports.Console)()]});
 
-    self.gemParams = _.extend({},
+    self.gemParams = assign({},
       require('../../local-ruby-config'), {
         buildDirectory: this.buildDirectory,
         sourceDirectory: this.sourceDirectory,
@@ -44,7 +44,8 @@ describe('integration-install-gems', function() {
     installGems(self.gemParams, function(err) {
       if (err) return done(err);
 
-      assert.isTrue(fs.existsSync(path.join(self.buildDirectory, 'gems/ruby/2.2.0/gems/jekyll-3.1.2')));
+      assert.isTrue(fs.existsSync(path.join(
+        self.buildDirectory, 'gems/ruby/2.2.0/gems/jekyll-3.1.2')));
       assert.isTrue(logger.info.calledWith('installing gem %s', 'jekyll-paginate'));
 
       done();
