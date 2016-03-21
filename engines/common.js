@@ -85,7 +85,7 @@ module.exports.runNpmInstall = function(params, moduleName, callback) {
     moduleName = null;
   }
 
-  params.logger.info('running npm install' + (moduleName ? ' ' + moduleName : null));
+  params.logger.info('running npm install' + (moduleName ? ' ' + moduleName : ''));
 
   var npmArgs = ['install'];
   if (moduleName) npmArgs.push(moduleName);
@@ -94,9 +94,9 @@ module.exports.runNpmInstall = function(params, moduleName, callback) {
     executable: params.npmExecutable,
     logger: params.logger,
     args: npmArgs,
-    stdioFilter: function() {
-      // Don't pipe npm install output to the log.. it's alot of extra noise
-      return false;
+    stdioFilter: function(msg, type) {
+      // Only show npm stderr output in the log
+      return type === 'error';
     },
     cwd: params.sourceDirectory, // run the command from the temp directory
     env: assign({}, process.env, {
@@ -123,7 +123,7 @@ function spawnProcess(params, callback) {
   var log = function(func, data) {
     var msg = data.toString();
     if (msg.trim().length === 0) return;
-    if (isFunction(params.stdioFilter) && !params.stdioFilter(msg)) return;
+    if (isFunction(params.stdioFilter) && !params.stdioFilter(msg, func)) return;
     params.logger[func](msg);
   };
 
@@ -132,7 +132,7 @@ function spawnProcess(params, callback) {
   });
 
   process.stderr.on('data', function(data) {
-    log('warn', data);
+    log('error', data);
   });
 
   process.on('error', function(err) {
