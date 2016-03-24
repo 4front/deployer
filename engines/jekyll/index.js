@@ -85,7 +85,8 @@ module.exports = function(settings) {
       cwd: params.buildDirectory, // run the command from the temp directory
       // Tack the temporary gem path onto the default gem path
       env: assign({}, process.env, {
-        GEM_PATH: params.systemGemPath + ':' + params.localGemsDirectory
+        GEM_PATH: params.systemGemPath + ':' + params.localGemsDirectory,
+        LC_ALL: 'en_US.UF-8'
       }, params.untrustedRoleEnv)
     };
 
