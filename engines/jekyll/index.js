@@ -2,8 +2,10 @@ var assign = require('lodash.assign');
 var pick = require('lodash.pick');
 var async = require('async');
 var path = require('path');
+var fs = require('fs');
 var os = require('os');
 var rimraf = require('rimraf');
+var yaml = require('js-yaml');
 var common = require('../common');
 var installGems = require('./lib/install-gems');
 
@@ -25,6 +27,9 @@ module.exports = function(settings) {
       },
       function(cb) {
         common.unpackSourceBundle(params, cb);
+      },
+      function(cb) {
+        modifyConfigYaml(params, cb);
       },
       function(cb) {
         installGems(params, function(err, localGemsDirectory) {
@@ -65,6 +70,39 @@ module.exports = function(settings) {
       callback();
     });
   };
+
+  function modifyConfigYaml(params, callback) {
+    var configYml = path.join(params.sourceDirectory, '_config.yml');
+    var config;
+    async.series([
+      function(cb) {
+        fs.readFile(configYml, function(err, data) {
+          if (err) {
+            if (err.code === 'ENOENT') {
+              config = {};
+            } else {
+              return cb(new Error('Error reading _config.yml: ' + err.message));
+            }
+          } else {
+            try {
+              config = yaml.safeLoad(data.toString());
+            } catch (ymlErr) {
+              return cb(new Error('Could not parse _config.yml'));
+            }
+          }
+
+          // Overwrite the url in config to the placeholder. Also delete the
+          // baseurl as it will always be the root in Aerobatic.
+          config.url = common.BASEURL_PLACEHOLDER;
+          delete config.baseurl;
+          cb();
+        });
+      },
+      function(cb) {
+        fs.writeFile(configYml, yaml.safeDump(config), cb);
+      }
+    ], callback);
+  }
 
   function runJekyllBuild(params, callback) {
     var jekyllExecutable = path.join(params.rubyPath, 'jekyll');

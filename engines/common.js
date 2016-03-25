@@ -13,6 +13,8 @@ require('simple-errors');
 
 module.exports.loadPackageJson = loadPackageJson;
 
+module.exports.BASEURL_PLACEHOLDER = 'https://__baseurl__';
+
 // Make the temp build directory and the source and output
 // sub-directories.
 module.exports.makeTempDirs = function(params, callback) {

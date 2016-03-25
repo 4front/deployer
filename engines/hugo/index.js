@@ -15,8 +15,6 @@ var common = require('../common');
 var gitHubUrl = require('github-url-to-object');
 var bitbucketUrl = require('bitbucket-url-to-object');
 
-var BASEURL_PLACEHOLDER = 'https://__baseurl__';
-
 module.exports = function(settings) {
   var deploy = require('../../lib/deploy')(settings);
 
@@ -202,7 +200,7 @@ module.exports = function(settings) {
         }
 
         // Force the baseurl to be the placeholder value
-        hugoConfig.baseurl = BASEURL_PLACEHOLDER;
+        hugoConfig.baseurl = common.BASEURL_PLACEHOLDER;
         if (isString(params.themeName)) {
           hugoConfig.theme = params.themeName;
         }
