@@ -117,7 +117,7 @@ module.exports = function(settings) {
 
     common.spawnProcess(spawnParams, function(err) {
       if (err) {
-        return callback(new Error('hugo build failure', {code: err.code}));
+        return callback(new Error('wintersmith build failure', {code: err.code}));
       }
       callback();
     });

@@ -70,14 +70,13 @@ function loadPackageJson(params, callback) {
       return callback(err);
     }
 
-    var json;
     try {
-      json = JSON.parse(data.toString());
+      params.packageJson = JSON.parse(data.toString());
     } catch (jsonErr) {
       return callback(new Error('Could not parse package.json'));
     }
 
-    callback(null, json);
+    callback();
   });
 }
 
@@ -91,6 +90,8 @@ module.exports.runNpmInstall = function(params, moduleName, callback) {
 
   var npmArgs = ['install'];
   if (moduleName) npmArgs.push(moduleName);
+  npmArgs.push('--progress');
+  npmArgs.push('false');
 
   var spawnArgs = {
     executable: params.npmExecutable,
