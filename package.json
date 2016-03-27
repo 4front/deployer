@@ -49,6 +49,7 @@
     "lodash.isnumber": "^3.0.3",
     "lodash.isobject": "^3.0.2",
     "lodash.isstring": "^4.0.1",
+    "lodash.map": "^4.2.1",
     "lodash.pick": "^4.1.0",
     "lodash.some": "^4.2.1",
     "lodash.sortby": "^4.2.1",

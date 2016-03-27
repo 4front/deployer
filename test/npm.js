@@ -54,7 +54,7 @@ describe('integration-npm', function() {
         // Create a tarball of the npm-react-sample directory
         var archiveStream = fs.createWriteStream(self.archivePath);
         var archive = archiver.create('tar', {gzip: true})
-          .directory(path.join(__dirname, './fixtures/npm-react-sample'), 'sample-app')
+          .directory(path.join(__dirname, './fixtures/react-redux-starter'), 'sample-app')
           .finalize();
 
         archive.pipe(archiveStream).on('finish', cb);
