@@ -7,6 +7,7 @@ var assign = require('lodash.assign');
 var pick = require('lodash.pick');
 var isEmpty = require('lodash.isempty');
 var isObject = require('lodash.isobject');
+var keys = require('lodash.keys');
 var common = require('./common');
 
 module.exports = function(settings) {
@@ -44,6 +45,17 @@ module.exports = function(settings) {
         common.unpackSourceBundle(params, cb);
       },
       function(cb) {
+        common.loadPackageJson(params, function(err) {
+          if (err) return cb(err);
+
+          params.logger.info('dependencies: %s',
+            keys(params.packageJson.dependencies).join(','));
+          params.logger.info('devDependencies: %s',
+            keys(params.packageJson.devDependencies).join(','));
+          cb();
+        });
+      },
+      function(cb) {
         common.runNpmInstall(params, cb);
       },
       function(cb) {
@@ -53,9 +65,6 @@ module.exports = function(settings) {
           params.logger.info('Installed modules: %s', dirs.join(','));
           cb();
         });
-      },
-      function(cb) {
-        common.loadPackageJson(params, cb);
       },
       function(cb) {
         runNpmBuild(params, cb);
