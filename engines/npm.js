@@ -45,6 +45,11 @@ module.exports = function(settings) {
         common.unpackSourceBundle(params, cb);
       },
       function(cb) {
+        // Make symlink for npm to the temp bin directory
+        params.logger.info('making npm symlink');
+        fs.symlink(params.npmExecutable, path.join(params.binDirectory, 'npm'), cb);
+      },
+      function(cb) {
         common.loadPackageJson(params, function(err) {
           if (err) return cb(err);
 
@@ -113,7 +118,7 @@ module.exports = function(settings) {
     }
 
     var spawnArgs = {
-      executable: params.npmExecutable,
+      executable: 'npm',
       logger: params.logger,
       args: ['run-script', buildScript],
       // stdioFilter: function(msg, type) {
@@ -123,7 +128,7 @@ module.exports = function(settings) {
       // },
       cwd: params.sourceDirectory, // run the command from the temp directory
       env: assign({}, process.env, {
-        PATH: path.join(params.sourceDirectory, 'node_modules', '.bin')
+        PATH: params.binDirectory + ':' + path.join(params.sourceDirectory, 'node_modules', '.bin')
           + ':' + process.env.PATH
       }, params.untrustedRoleEnv)
     };

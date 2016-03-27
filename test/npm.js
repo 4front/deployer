@@ -20,7 +20,7 @@ describe('integration-npm', function() {
 
     this.settings = assign({}, {
       logger: winston,
-      npmExecutable: 'npm',
+      npmExecutable: '/usr/local/lib/node_modules/npm/bin/npm-cli.js',
       storage: {
         writeStream: sinon.spy(function(params, callback) {
           callback();

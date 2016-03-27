@@ -20,11 +20,13 @@ module.exports.BASEURL_PLACEHOLDER = 'https://__baseurl__';
 module.exports.makeTempDirs = function(params, callback) {
   assign(params, {
     sourceDirectory: path.join(params.buildDirectory, 'source'),
-    outputDirectory: path.join(params.buildDirectory, 'output')
+    outputDirectory: path.join(params.buildDirectory, 'output'),
+    binDirectory: path.join(params.buildDirectory, 'bin')
   });
 
   params.logger.debug('making temp build directory: %s', params.buildDirectory);
-  var dirs = [params.buildDirectory, params.sourceDirectory, params.outputDirectory];
+  var dirs = [params.buildDirectory, params.binDirectory,
+    params.sourceDirectory, params.outputDirectory];
   async.eachSeries(dirs, function(dir, next) {
     fs.mkdir(dir, next);
   }, callback);
@@ -94,7 +96,7 @@ module.exports.runNpmInstall = function(params, moduleName, callback) {
   // npmArgs.push('--progress', 'false');
 
   var spawnArgs = {
-    executable: params.npmExecutable,
+    executable: 'npm',
     logger: params.logger,
     args: npmArgs,
     // stdioFilter: function(msg, type) {
@@ -103,6 +105,7 @@ module.exports.runNpmInstall = function(params, moduleName, callback) {
     // },
     cwd: params.sourceDirectory, // run the command from the temp directory
     env: assign({}, process.env, {
+      PATH: params.binDirectory + ':' + process.env.PATH,
       NODE_ENV: 'development'
     }, params.untrustedRoleEnv)
   };
