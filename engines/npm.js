@@ -98,10 +98,11 @@ module.exports = function(settings) {
       executable: params.npmExecutable,
       logger: params.logger,
       args: ['run-script', buildScript],
-      stdioFilter: function(msg, type) {
-        // Only show npm stderr output in the log
-        return type === 'error';
-      },
+      // stdioFilter: function(msg, type) {
+      //   // Only show npm stderr output in the log
+      //   // return type === 'error';
+      //   return true;
+      // },
       cwd: params.sourceDirectory, // run the command from the temp directory
       env: assign({}, process.env, {
         PATH: path.join(params.sourceDirectory, 'node_modules', '.bin')
