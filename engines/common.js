@@ -91,7 +91,7 @@ module.exports.runNpmInstall = function(params, moduleName, callback) {
 
   var npmArgs = ['install'];
   if (moduleName) npmArgs.push(moduleName);
-  npmArgs.push('--progress', 'false');
+  // npmArgs.push('--progress', 'false');
 
   var spawnArgs = {
     executable: params.npmExecutable,
