@@ -86,7 +86,8 @@ module.exports.runNpmInstall = function(params, moduleName, callback) {
     moduleName = null;
   }
 
-  params.logger.info('running npm install' + (moduleName ? ' ' + moduleName : ''));
+  params.logger.info('running npm install' + (moduleName ? ' ' + moduleName : '') +
+    ' in ' + params.sourceDirectory);
 
   var npmArgs = ['install'];
   if (moduleName) npmArgs.push(moduleName);
@@ -96,10 +97,10 @@ module.exports.runNpmInstall = function(params, moduleName, callback) {
     executable: params.npmExecutable,
     logger: params.logger,
     args: npmArgs,
-    stdioFilter: function(msg, type) {
-      // Only show npm stderr output in the log
-      return type === 'error';
-    },
+    // stdioFilter: function(msg, type) {
+    //   // Only show npm stderr output in the log
+    //   return type === 'error';
+    // },
     cwd: params.sourceDirectory, // run the command from the temp directory
     env: assign({}, process.env, {
       NODE_ENV: 'development'
