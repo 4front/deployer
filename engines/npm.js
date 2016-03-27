@@ -104,7 +104,8 @@ module.exports = function(settings) {
       },
       cwd: params.sourceDirectory, // run the command from the temp directory
       env: assign({}, process.env, {
-        PATH: '/usr/bin:' + path.join(params.sourceDirectory, 'node_modules', '.bin') + ':$PATH'
+        PATH: path.join(params.sourceDirectory, 'node_modules', '.bin')
+          + ':' + process.env.PATH
       }, params.untrustedRoleEnv)
     };
 
