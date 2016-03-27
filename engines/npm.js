@@ -65,7 +65,7 @@ module.exports = function(settings) {
       },
       function(cb) {
         // List out all the installed modules
-        fs.readdir(path.join(params.sourceDirectory), function(err, files) {
+        fs.readdir(params.sourceDirectory, function(err, files) {
           if (err) return cb(err);
           params.logger.info('Source directory list: %s', files.join(','));
           cb();
