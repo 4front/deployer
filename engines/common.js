@@ -99,10 +99,10 @@ module.exports.runNpmInstall = function(params, moduleName, callback) {
     executable: 'npm',
     logger: params.logger,
     args: npmArgs,
-    // stdioFilter: function(msg, type) {
-    //   // Only show npm stderr output in the log
-    //   return type === 'error';
-    // },
+    stdioFilter: function(msg, type) {
+      // Only show npm stderr output in the log
+      return type === 'error';
+    },
     cwd: params.sourceDirectory, // run the command from the temp directory
     env: assign({}, process.env, {
       PATH: params.binDirectory + ':' + process.env.PATH,

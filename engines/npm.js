@@ -7,8 +7,6 @@ var assign = require('lodash.assign');
 var pick = require('lodash.pick');
 var isEmpty = require('lodash.isempty');
 var isObject = require('lodash.isobject');
-// var keys = require('lodash.keys');
-// var map = require('lodash.map');
 var common = require('./common');
 
 module.exports = function(settings) {
@@ -53,23 +51,6 @@ module.exports = function(settings) {
       function(cb) {
         common.loadPackageJson(params, cb);
       },
-      // function(cb) {
-      //   var dependencies = map(params.packageJson.dependencies, function(value, key) {
-      //     return key + '@' + value;
-      //   });
-      //   var devDependencies = map(params.packageJson.devDependencies, function(value, key) {
-      //     return key + '@' + value;
-      //   });
-      //
-      //   params.logger.info('dependencies: %s',
-      //     keys(params.packageJson.dependencies).join(','));
-      //   params.logger.info('devDependencies: %s',
-      //     keys(params.packageJson.devDependencies).join(','));
-      //
-      //   async.eachSeries([].concat(dependencies, devDependencies), function(dep, next) {
-      //     common.runNpmInstall(params, dep, next);
-      //   }, cb);
-      // },
       function(cb) {
         common.runNpmInstall(params, cb);
       },
@@ -131,11 +112,10 @@ module.exports = function(settings) {
       executable: 'npm',
       logger: params.logger,
       args: ['run-script', buildScript],
-      // stdioFilter: function(msg, type) {
-      //   // Only show npm stderr output in the log
-      //   // return type === 'error';
-      //   return true;
-      // },
+      stdioFilter: function(msg, type) {
+        // Only show npm stderr output in the log
+        return type === 'error' || msg.indexOf('ERROR') !== -1;
+      },
       cwd: params.sourceDirectory, // run the command from the temp directory
       env: assign({}, process.env, {
         PATH: params.binDirectory + ':' + path.join(params.sourceDirectory, 'node_modules', '.bin')
