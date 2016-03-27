@@ -1,4 +1,5 @@
 var async = require('async');
+var fs = require('fs');
 var path = require('path');
 var os = require('os');
 var rimraf = require('rimraf');
@@ -44,6 +45,14 @@ module.exports = function(settings) {
       },
       function(cb) {
         common.runNpmInstall(params, cb);
+      },
+      function(cb) {
+        // List out all the installed modules
+        fs.readdir(path.join(params.sourceDirectory, 'node_modules'), function(err, dirs) {
+          if (err) return cb(err);
+          params.logger.info('Installed modules: %s', dirs.join(','));
+          cb();
+        });
       },
       function(cb) {
         common.loadPackageJson(params, cb);
