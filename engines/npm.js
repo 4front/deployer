@@ -65,9 +65,9 @@ module.exports = function(settings) {
       },
       function(cb) {
         // List out all the installed modules
-        fs.readdir(path.join(params.sourceDirectory, 'node_modules'), function(err, dirs) {
+        fs.readdir(path.join(params.sourceDirectory), function(err, files) {
           if (err) return cb(err);
-          params.logger.info('Installed modules: %s', dirs.join(','));
+          params.logger.info('Source directory list: %s', files.join(','));
           cb();
         });
       },
