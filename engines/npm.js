@@ -81,6 +81,8 @@ module.exports = function(settings) {
   };
 
   function runNpmBuild(params, callback) {
+    params.logger.info('PATH=%s', process.env.PATH);
+
     // Look for the name of the build script
     var buildScript = params.buildConfig.script;
     if (isEmpty(buildScript)) {
@@ -102,7 +104,7 @@ module.exports = function(settings) {
       },
       cwd: params.sourceDirectory, // run the command from the temp directory
       env: assign({}, process.env, {
-        PATH: path.join(params.sourceDirectory, 'node_modules', '.bin') + ':$PATH'
+        PATH: '/usr/bin:' + path.join(params.sourceDirectory, 'node_modules', '.bin') + ':$PATH'
       }, params.untrustedRoleEnv)
     };
 
