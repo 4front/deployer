@@ -3,3 +3,5 @@ coverage
 *.log
 .sass-cache
 gems
+test/fixtures/npm-cache/*
+!test/fixtures/npm-cache/.gitkeep

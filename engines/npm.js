@@ -1,5 +1,5 @@
 var async = require('async');
-var fs = require('fs');
+var fs = require('fs-extra');
 var path = require('path');
 var os = require('os');
 var rimraf = require('rimraf');
@@ -52,15 +52,14 @@ module.exports = function(settings) {
         common.loadPackageJson(params, cb);
       },
       function(cb) {
-        common.runNpmInstall(params, cb);
+        // Copy the npm-cache to the temp directory
+        params.logger.debug('copying npm cache to build directory');
+        var src = params.npmCacheDirectory;
+        params.npmCacheDirectory = path.join(params.buildDirectory, 'npm-cache');
+        fs.copy(src, params.npmCacheDirectory, cb);
       },
       function(cb) {
-        // List out all the installed modules
-        fs.readdir(params.sourceDirectory, function(err, files) {
-          if (err) return cb(err);
-          params.logger.info('Source directory list: %s', files.join(','));
-          cb();
-        });
+        common.runNpmInstall(params, cb);
       },
       function(cb) {
         runNpmBuild(params, cb);
@@ -95,8 +94,6 @@ module.exports = function(settings) {
   };
 
   function runNpmBuild(params, callback) {
-    params.logger.info('PATH=%s', process.env.PATH);
-
     // Look for the name of the build script
     var buildScript = params.buildConfig.script;
     if (isEmpty(buildScript)) {

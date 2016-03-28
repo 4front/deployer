@@ -21,6 +21,7 @@ describe('integration-npm', function() {
     this.settings = assign({}, {
       logger: winston,
       npmExecutable: '/usr/local/lib/node_modules/npm/bin/npm-cli.js',
+      npmCacheDirectory: path.join(__dirname, './fixtures/npm-cache'),
       storage: {
         writeStream: sinon.spy(function(params, callback) {
           callback();
