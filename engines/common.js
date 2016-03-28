@@ -95,6 +95,12 @@ module.exports.runNpmInstall = function(params, moduleName, callback) {
   if (moduleName) npmArgs.push(moduleName);
   npmArgs.push('--progress', 'false');
 
+  if (params.npmCacheDirectory) {
+    // Force npm to install from the cache
+    // https://github.com/npm/npm/issues/2568#issuecomment-6595842
+    npmArgs.push('--cache', params.npmCacheDirectory, '--cache-min', 'Infinity');
+  }
+
   var spawnArgs = {
     executable: 'npm',
     logger: params.logger,

@@ -20,7 +20,7 @@ module.exports = function(settings) {
       buildDirectory: buildDirectory,
       appId: appId,
       versionId: versionId,
-    }, pick(settings, 'logger', 'npmExecutable'));
+    }, pick(settings, 'logger', 'npmExecutable', 'npmCacheDirectory'));
 
     if (isEmpty(params.buildConfig.output)) {
       return callback(new Error('No "output" property specified in the build ' +
