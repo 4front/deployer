@@ -11,6 +11,7 @@ var common = require('./common');
 
 module.exports = function(settings) {
   var deploy = require('../lib/deploy')(settings);
+  var npmOptimizer = require('../lib/npm-optimizer')(settings);
 
   return function(sourceBundle, appId, versionId, callback) {
     settings.logger.info('start npm deployment');
@@ -20,7 +21,7 @@ module.exports = function(settings) {
       buildDirectory: buildDirectory,
       appId: appId,
       versionId: versionId,
-    }, pick(settings, 'logger', 'npmExecutable', 'npmCacheDirectory'));
+    }, pick(settings, 'logger', 'npmExecutable', 'npmRegistryUrl', 'npmTarballDirectory'));
 
     if (isEmpty(params.buildConfig.output)) {
       return callback(new Error('No "output" property specified in the build ' +
@@ -52,11 +53,13 @@ module.exports = function(settings) {
         common.loadPackageJson(params, cb);
       },
       function(cb) {
-        // Copy the npm-cache to the temp directory
-        params.logger.debug('copying npm cache to build directory');
-        var src = params.npmCacheDirectory;
-        params.npmCacheDirectory = path.join(params.buildDirectory, 'npm-cache');
-        fs.copy(src, params.npmCacheDirectory, cb);
+        // Optimize the npm dependencies in package.json and overwrite the
+        // original version in the source directory.
+        params.logger.debug('optimize npm dependencies');
+        npmOptimizer(params.packageJson);
+
+        fs.writeFile(path.join(params.sourceDirectory, 'package.json'),
+          JSON.stringify(params.packageJson, null, 2), cb);
       },
       function(cb) {
         common.runNpmInstall(params, cb);
