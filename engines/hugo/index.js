@@ -173,13 +173,14 @@ module.exports = function(settings) {
     var configContents;
 
     // Look for the first config file
-    var configFiles = ['config.toml', 'config.yml', 'config.json'].map(function(filename) {
+    var configFiles = ['config.toml', 'config.yml', 'config.yaml', 'config.json'];
+    var configPaths = configFiles.map(function(filename) {
       return path.join(params.sourceDirectory, filename);
     });
 
     async.series([
       function(cb) {
-        getFirstConfigFile(configFiles, function(err, file) {
+        getFirstConfigFile(configPaths, function(err, file) {
           if (err) return cb(err);
           configFile = file;
           cb();
