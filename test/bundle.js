@@ -140,11 +140,11 @@ describe('bundle', function() {
         self.deployBundle(self.bundle, self.context, function(err) {
           if (err) return cb(err);
 
-          self.mockVersions.create.calledWith(sinon.match({
+          assert.isTrue(self.mockVersions.create.calledWith(sinon.match({
             messge: self.message,
             appId: self.appId,
             manifest: {}
-          }), self.context);
+          }), self.context));
 
           assert.equal(self.settings.storage.writeStream.callCount, self.sampleFiles.length + 1);
 
@@ -157,11 +157,11 @@ describe('bundle', function() {
           self.settings.storage.readFile.calledWith(
             self.appId + '/' + self.versionId + '/package.json');
 
-          self.mockVersions.updateStatus.calledWith(sinon.match({
+          assert.isTrue(self.mockVersions.updateStatus.calledWith(sinon.match({
             versionId: self.versionId,
             status: 'complete',
             manifest: self.manifest
-          }), self.context);
+          }), self.context));
 
           cb();
         });
@@ -410,5 +410,43 @@ describe('bundle', function() {
       assert.equal(err.code, 'deploymentInProgress');
       done();
     });
+  });
+
+  it('deploy fails for invalid package.json', function(done) {
+    self.settings.storage.readFile = function(key, callback) {
+      callback(null, '{foo:}');
+    };
+
+    async.series([
+      function(cb) {
+        // Create the temp sample app archive
+        var archive = archiver.create('tar', {gzip: true})
+          .directory(path.join(__dirname, './fixtures/sample-app'), 'sample-app')
+          .finalize();
+
+        archive.pipe(self.sampleArchive);
+
+        self.sampleArchive.on('close', function() {
+          cb();
+        });
+      },
+      function(cb) {
+        self.bundle.readStream = function() {
+          return fs.createReadStream(self.sampleArchivePath);
+        };
+
+        self.deployBundle(self.bundle, self.context, function(err) {
+          if (err) return cb(err);
+
+          assert.isTrue(self.mockVersions.updateStatus.calledWith(sinon.match({
+            versionId: self.versionId,
+            status: 'failed',
+            error: 'Cannot parse package.json'
+          })));
+
+          cb();
+        });
+      }
+    ], done);
   });
 });
