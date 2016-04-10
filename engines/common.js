@@ -107,7 +107,8 @@ module.exports.runNpmInstall = function(params, moduleName, callback) {
     cwd: params.sourceDirectory, // run the command from the temp directory
     env: assign({}, process.env, {
       PATH: params.binDirectory + ':' + process.env.PATH,
-      NODE_ENV: 'development'
+      NODE_ENV: 'development',
+      NPM_CONFIG_PREFIX: params.buildDirectory
     }, params.untrustedRoleEnv)
   };
 
