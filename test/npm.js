@@ -22,7 +22,7 @@ describe('integration-npm', function() {
       logger: winston,
       npmExecutable: '/usr/local/lib/node_modules/npm/bin/npm-cli.js',
       npmTarballDirectory: path.join(__dirname, './fixtures/npm-tarballs'),
-      npmRegistryUrl: 'http://localhost:5080',
+      // npmRegistryUrl: 'http://localhost:5080',
       storage: {
         writeStream: sinon.spy(function(params, callback) {
           callback();
@@ -49,7 +49,7 @@ describe('integration-npm', function() {
   });
 
   it('builds npm react redux app', function(done) {
-    this.timeout(200000);
+    this.timeout(500000);
 
     async.series([
       function(cb) {
@@ -83,7 +83,7 @@ describe('integration-npm', function() {
   });
 
   it('builds npm angular yeoman app', function(done) {
-    this.timeout(200000);
+    this.timeout(500000);
 
     this.sourceBundle.buildConfig.output = 'dist';
 

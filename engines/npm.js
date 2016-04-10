@@ -11,7 +11,7 @@ var common = require('./common');
 
 module.exports = function(settings) {
   var deploy = require('../lib/deploy')(settings);
-  var npmOptimizer = require('../lib/npm-optimizer')(settings);
+  // var npmOptimizer = require('../lib/npm-optimizer')(settings);
 
   return function(sourceBundle, appId, versionId, callback) {
     settings.logger.info('start npm deployment');
@@ -51,15 +51,6 @@ module.exports = function(settings) {
       },
       function(cb) {
         common.loadPackageJson(params, cb);
-      },
-      function(cb) {
-        // Optimize the npm dependencies in package.json and overwrite the
-        // original version in the source directory.
-        params.logger.debug('optimize npm dependencies');
-        npmOptimizer(params.packageJson);
-
-        fs.writeFile(path.join(params.sourceDirectory, 'package.json'),
-          JSON.stringify(params.packageJson, null, 2), cb);
       },
       function(cb) {
         common.runNpmInstall(params, cb);
