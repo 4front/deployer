@@ -1,5 +1,6 @@
 var zlib = require('zlib');
 var tar = require('tar');
+var os = require('os');
 var async = require('async');
 var fs = require('fs-extra');
 var path = require('path');
@@ -81,6 +82,12 @@ function loadPackageJson(params, callback) {
     callback();
   });
 }
+
+module.exports.ensureNpmCache = function() {
+  var npmCacheDir = path.join(os.tmpdir(), '.npm');
+  fs.ensureDirSync(npmCacheDir);
+  return npmCacheDir;
+};
 
 module.exports.runNpmInstall = function(params, moduleName, callback) {
   if (isFunction(moduleName)) {

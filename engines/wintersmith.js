@@ -20,6 +20,7 @@ module.exports = function(settings) {
       buildDirectory: buildDirectory,
       appId: appId,
       versionId: versionId,
+      npmCacheDir: common.ensureNpmCache(),
     }, pick(settings, 'logger', 'wintersmithExecutable', 'npmExecutable'));
 
     async.series([

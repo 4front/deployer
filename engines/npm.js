@@ -11,10 +11,6 @@ var common = require('./common');
 
 module.exports = function(settings) {
   var deploy = require('../lib/deploy')(settings);
-  // var npmOptimizer = require('../lib/npm-optimizer')(settings);
-
-  var npmCacheDir = path.join(os.tmpdir(), '.npm');
-  fs.ensureDirSync(npmCacheDir);
 
   return function(sourceBundle, appId, versionId, callback) {
     settings.logger.info('start npm deployment');
@@ -24,7 +20,7 @@ module.exports = function(settings) {
       buildDirectory: buildDirectory,
       appId: appId,
       versionId: versionId,
-      npmCacheDir: npmCacheDir
+      npmCacheDir: common.ensureNpmCache(),
     }, pick(settings, 'logger', 'npmExecutable', 'npmRegistryUrl', 'npmTarballDirectory'));
 
     if (isEmpty(params.buildConfig.output)) {
