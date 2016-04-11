@@ -95,6 +95,7 @@ module.exports.runNpmInstall = function(params, moduleName, callback) {
   if (moduleName) npmArgs.push(moduleName);
   if (params.npmRegistryUrl) npmArgs.push('--registry', params.npmRegistryUrl);
   npmArgs.push('--progress', 'false');
+  npmArgs.push('--cache', params.npmCacheDir);
 
   var spawnArgs = {
     executable: 'npm',
@@ -107,8 +108,7 @@ module.exports.runNpmInstall = function(params, moduleName, callback) {
     cwd: params.sourceDirectory, // run the command from the temp directory
     env: assign({}, process.env, {
       PATH: params.binDirectory + ':' + process.env.PATH,
-      NODE_ENV: 'development',
-      NPM_CONFIG_PREFIX: params.buildDirectory
+      NODE_ENV: 'development'
     }, params.untrustedRoleEnv)
   };
 
