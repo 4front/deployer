@@ -8,6 +8,7 @@ var assign = require('lodash.assign');
 var isFunction = require('lodash.isfunction');
 var isNumber = require('lodash.isnumber');
 var pick = require('lodash.pick');
+var debug = require('debug')('4front:deployer:common');
 var spawn = require('child_process').spawn;
 
 require('simple-errors');
@@ -85,6 +86,11 @@ function loadPackageJson(params, callback) {
     callback();
   });
 }
+
+module.exports.symlinkPython2 = function(params, callback) {
+  debug('symlink python %s', params.python2Binary);
+  fs.symlink(params.python2Binary, path.join(params.binDirectory, 'python2'), callback);
+};
 
 module.exports.ensureNpmCache = function() {
   var npmCacheDir = path.join(os.tmpdir(), '.npm');

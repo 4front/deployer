@@ -10,7 +10,8 @@ module.exports = function(settings) {
   if (settings.localMachine === true) {
     debug('use local machine build runtimes');
     assign(settings, require('./local-ruby-config'), {
-      hugoBinary: 'hugo'
+      hugoBinary: 'hugo',
+      pygmentsPath: '/usr/local/bin'
     });
   }
 

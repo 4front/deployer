@@ -26,7 +26,7 @@ module.exports = function(settings) {
       buildDirectory: buildDirectory,
       appId: appId,
       versionId: versionId,
-    }, pick(settings, 'logger', 'hugoBinary', 'pygmentsPath'));
+    }, pick(settings, 'logger', 'hugoBinary', 'pygmentsPath', 'python2Binary'));
 
     async.series([
       function(cb) {
@@ -44,6 +44,9 @@ module.exports = function(settings) {
       },
       function(cb) {
         modifyConfigFile(params, cb);
+      },
+      function(cb) {
+        common.symlinkPython2(params, cb);
       },
       function(cb) {
         runHugoBuild(params, cb);
@@ -95,7 +98,9 @@ module.exports = function(settings) {
       },
       cwd: params.buildDirectory, // run the command from the temp directory
       env: assign({}, process.env, {
-        PATH: process.env.PATH + ':' + params.pygmentsPath
+        // Add the temp bin directory where the python2 symlink was created
+        // and the pygments path to the system PATH
+        PATH: process.env.PATH + ':' + params.binDirectory + ':' + params.pygmentsPath
       }, params.untrustedRoleEnv)
     };
 
