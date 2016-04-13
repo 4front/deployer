@@ -14,7 +14,10 @@ require('simple-errors');
 
 module.exports.loadPackageJson = loadPackageJson;
 
-module.exports.BASEURL_PLACEHOLDER = 'https://__baseurl__';
+// Include a trailing slash on the baseurl placeholder. This
+// may result in double slashes in the rendered page but
+// the htmlprep module will take care of fixing that.
+module.exports.BASEURL_PLACEHOLDER = 'https://__baseurl__/';
 
 // Make the temp build directory and the source and output
 // sub-directories.

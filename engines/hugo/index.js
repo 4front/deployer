@@ -26,7 +26,7 @@ module.exports = function(settings) {
       buildDirectory: buildDirectory,
       appId: appId,
       versionId: versionId,
-    }, pick(settings, 'logger', 'hugoBinary'));
+    }, pick(settings, 'logger', 'hugoBinary', 'pygmentsPath'));
 
     async.series([
       function(cb) {
@@ -95,6 +95,7 @@ module.exports = function(settings) {
       },
       cwd: params.buildDirectory, // run the command from the temp directory
       env: assign({}, process.env, {
+        PATH: process.env.PATH + ':' + params.pygmentsPath
       }, params.untrustedRoleEnv)
     };
 

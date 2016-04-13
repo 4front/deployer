@@ -20,6 +20,7 @@ describe('integration-hugo', function() {
 
     this.settings = assign({}, {
       hugoBinary: 'hugo',
+      pygmentsPath: '/usr/local/bin',
       logger: winston,
       storage: {
         writeStream: sinon.spy(function(params, callback) {
