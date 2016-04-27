@@ -85,7 +85,7 @@ module.exports = function(settings) {
             }
           } else {
             try {
-              config = yaml.safeLoad(data.toString());
+              config = yaml.safeLoad(data.toString(), {json: true});
             } catch (ymlErr) {
               return cb(new Error('Could not parse _config.yml'));
             }
