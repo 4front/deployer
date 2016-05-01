@@ -2,13 +2,13 @@ var async = require('async');
 var fs = require('fs-extra');
 var path = require('path');
 var glob = require('glob');
-var debug = require('debug')('4front:deployer:basic');
+var debug = require('debug')('4front:deployer:copy');
 
 require('simple-errors');
 
 var blacklistedExtensions = ['php', 'asp'];
 
-// Basic deploy engine that deploys files exactly as they appear in
+// Copy deploy engine that deploys files exactly as they appear in
 // the source bundle without any pre-processing.
 module.exports = function(settings) {
   return function(params, callback) {

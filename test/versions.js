@@ -52,22 +52,6 @@ describe('version', function() {
     this.userId = uid.sync(10);
     this.appId = uid.sync(10);
     this.nextVersionNum = 1;
-
-    this.context = {
-      user: {
-        userId: this.userId
-      },
-      virtualApp: {
-        appId: this.appId,
-        url: 'http://app.apphost.com',
-        name: uid.sync(5)
-      },
-      organization: {
-        orgId: uid.sync(10),
-        environments: ['production']
-      }
-    };
-
     this.message = 'new version';
 
     this.manifest = {
@@ -84,11 +68,12 @@ describe('version', function() {
   it('creates version', function(done) {
     var versionData = {
       appId: this.appId,
+      userId: this.userId,
       message: this.message,
       manifest: this.manifest
     };
 
-    this.versions.create(versionData, this.context, function(err, version) {
+    this.versions.create(versionData, function(err, version) {
       if (err) return done(err);
 
       assert.isTrue(self.settings.database.nextVersionNum.calledWith(self.appId));
@@ -111,124 +96,24 @@ describe('version', function() {
     });
   });
 
-  describe('updateVersionStatus', function() {
-    it('force all traffic to new version', function(done) {
-      var virtualEnv = 'feature4';
-
-      var versionData = {
-        versionId: uid.sync(10),
-        status: 'complete',
-        virtualEnv: virtualEnv,
-        manifest: {
-          router: [
-            {
-              module: 'webpage'
-            }
-          ]
-        }
-      };
-
-      this.versions.updateStatus(versionData, this.context, {}, function(err, version) {
-        assert.isTrue(self.settings.database.updateVersion.called);
-
-        assert.isTrue(self.settings.database.updateVersion.calledWith(sinon.match({
-          appId: self.appId,
-          versionId: versionData.versionId,
-          status: 'complete',
-          manifest: versionData.manifest
-        })));
-
-        assert.isTrue(self.settings.database.updateTrafficRules.calledWith(
-          self.context.virtualApp.appId,
-          virtualEnv,
-          [{versionId: versionData.versionId, rule: '*'}]
-        ));
-
-        assert.ok(self.settings.virtualAppRegistry.flushApp.calledWith(self.context.virtualApp));
-        assert.equal(version.previewUrl,
-          'http://' + self.context.virtualApp.name + '--' + virtualEnv + '.' + self.settings.virtualHost);
-
-        done();
-      });
-    });
-
-    it('do not direct any traffic to it', function(done) {
-      self.context.virtualApp.trafficControlEnabled = true;
-      var options = {forceAllTrafficToNewVersion: false};
-      var versionData = {
-        versionId: uid.sync(10),
-        status: 'complete'
-      };
-
-      this.versions.updateStatus(versionData, this.context, options, function(err, version) {
-        assert.isTrue(self.settings.database.updateVersion.calledWith(sinon.match({
-          appId: self.context.virtualApp.appId,
-          versionId: versionData.versionId,
-          status: 'complete'
-        })));
-
-        assert.isFalse(self.settings.database.updateTrafficRules.called);
-        assert.isFalse(self.settings.virtualAppRegistry.flushApp.called);
-        assert.equal(version.previewUrl, self.context.virtualApp.url +
-          '?_version=' + versionData.versionId);
-
-        done();
-      });
-    });
-
-    it('version status updated to failed', function(done) {
-      var versionData = {
-        versionId: uid.sync(10),
-        status: 'failed',
-        error: 'Version failed to deploy'
-      };
-
-      var options = {forceAllTrafficToNewVersion: false};
-
-      this.versions.updateStatus(versionData, this.context, options, function(err) {
-        if (err) return done(err);
-
-        assert.isTrue(self.settings.database.updateVersion.calledWith(sinon.match({
-          appId: self.appId,
-          versionId: versionData.versionId,
-          status: 'failed',
-          error: versionData.error
-        })));
-
-        assert.isFalse(self.settings.database.updateTrafficRules.called);
-        done();
-      });
-    });
-
-    it('traffic rules not updated if no environments exist', function(done) {
-      this.context.organization.environments = [];
-
-      this.versions.updateStatus(uid.sync(10), this.context, null, function(err) {
-        if (err) return done(err);
-        assert.isFalse(self.settings.database.updateTrafficRules.called);
-        done();
-      });
-    });
-  });
-
   it('delete version', function(done) {
     var versionId = uid.sync(10);
 
-    this.versions.delete(versionId, this.context, function(err) {
+    this.versions.delete(this.appId, versionId, function(err) {
       if (err) return done(err);
       assert.isTrue(self.settings.database.getVersion.calledWith(
-        self.context.virtualApp.appId, versionId));
+        self.appId, versionId));
       assert.isTrue(self.settings.database.deleteVersion.calledWith(
-        self.context.virtualApp.appId, versionId));
+        self.appId, versionId));
       assert.isTrue(self.settings.storage.deleteFiles.calledWith(
-        self.context.virtualApp.appId + '/' + versionId));
+        self.appId + '/' + versionId));
 
       done();
     });
   });
 
   it('deletes all versions', function(done) {
-    this.versions.deleteAll(this.appId, this.context, function(err) {
+    this.versions.deleteAll(this.appId, function(err) {
       if (err) return done(err);
       assert.isTrue(self.settings.storage.deleteFiles.calledWith(self.appId));
 
@@ -237,33 +122,31 @@ describe('version', function() {
   });
 
   it('cleans up old versions', function(done) {
-    this.context.virtualApp.trafficRules = {
+    var trafficRules = {
       production: [{versionId: 'a'}],
       staging: [{versionId: 'c'}, {versionId: 'd'}]
     };
 
-    var appId = this.context.virtualApp.appId;
-
     var versions = [
-      {created: 1, versionId: 'a', appId: appId},
-      {created: 2, versionId: 'b', appId: appId},
-      {created: 3, versionId: 'c', appId: appId},
-      {created: 4, versionId: 'd', appId: appId},
-      {created: 5, versionId: 'e', appId: appId}
+      {created: 1, versionId: 'a', appId: self.appId},
+      {created: 2, versionId: 'b', appId: self.appId},
+      {created: 3, versionId: 'c', appId: self.appId},
+      {created: 4, versionId: 'd', appId: self.appId},
+      {created: 5, versionId: 'e', appId: self.appId}
     ];
 
     this.settings.database.listVersions = sinon.spy(function(_appId, options, callback) {
       callback(null, versions);
     });
 
-    this.versions.deleteOldest(self.context, 2, function(err) {
+    this.versions.deleteOldest(this.appId, trafficRules, 2, function(err) {
       if (err) return done(err);
 
       assert.isTrue(self.settings.database.listVersions.calledWith(
-        appId, {excludeIncomplete: false}));
+        self.appId, {excludeIncomplete: false}));
       assert.equal(2, self.settings.database.deleteVersion.callCount);
-      assert.isTrue(self.settings.database.deleteVersion.calledWith(appId, 'e'));
-      assert.isTrue(self.settings.database.deleteVersion.calledWith(appId, 'b'));
+      assert.isTrue(self.settings.database.deleteVersion.calledWith(self.appId, 'e'));
+      assert.isTrue(self.settings.database.deleteVersion.calledWith(self.appId, 'b'));
 
       done();
     });

@@ -53,6 +53,9 @@ describe('build', function() {
           appId: appId
         });
       }),
+      createVersion: sinon.spy(function(versionData, cb) {
+        cb(null, versionData);
+      }),
       updateVersion: sinon.spy(function(versionData, cb) {
         cb(null, versionData);
       }),
@@ -61,6 +64,9 @@ describe('build', function() {
       }),
       updateTrafficRules: sinon.spy(function(appId, virtualEnv, trafficRules, cb) {
         cb();
+      }),
+      nextVersionNum: sinon.spy(function(appId, cb) {
+        cb(null, 1);
       })
     };
 
@@ -93,13 +99,25 @@ describe('build', function() {
       if (err) return done(err);
 
       assert.isTrue(self.storage.copyToLocal.calledWith({
-        bucket: self.settings.s3StagingBucket,
+        bucket: self.settings.storageStagingBucket,
         key: self.appId + '/' + self.buildParams.sourceTarball,
         localPath: path.join(os.tmpdir(), self.buildParams.sourceTarball)
       }));
 
       assert.isTrue(self.database.listVersions.calledWith(self.appId));
       assert.isTrue(self.database.getVersion.calledWith(self.appId, self.versionId));
+      assert.equal(self.database.updateVersion.callCount, 2);
+
+      assert.isTrue(self.database.updateVersion.calledWith(sinon.match({
+        versionId: self.versionId,
+        appId: self.appId,
+        userId: self.userId,
+        status: 'running',
+        startedAt: sinon.match.number,
+        manifest: manifest.defaultManifest
+      })));
+
+      assert.isFalse(self.database.createVersion.called);
 
       assert.isTrue(self.storage.copyToStorage.calledWith({
         bucket: self.settings.storageDeploymentBucket,
@@ -108,13 +126,74 @@ describe('build', function() {
         localPath: self.buildParams.sourceDirectory
       }));
 
-      assert.isTrue(self.database.updateVersion.calledWith({
+      assert.isTrue(self.database.updateVersion.calledWith(sinon.match({
         versionId: self.versionId,
         appId: self.appId,
-        status: 'running',
-        manifest: manifest.defaultManifest,
-        startedAt: sinon.match.number
+        status: 'complete',
+        duration: sinon.match.number
+      })));
+
+      assert.isTrue(self.database.updateTrafficRules.calledWith(
+        self.appId,
+        'production',
+        [{versionId: self.versionId, rule: '*'}]
+      ));
+
+      assert.ok(version);
+      assert.equal(version.status, 'complete');
+      assert.isNumber(version.duration);
+      assert.deepEqual(version.manifest, manifest.defaultManifest);
+      done();
+    });
+  });
+
+  it('builds and version does not already exist in database', function(done) {
+    this.database.getVersion = sinon.spy(function(appId, versionId, cb) {
+      cb(null, null);
+    });
+
+    var build = require('../lib/build')(this.settings);
+    build(this.buildParams, function(err, version) {
+      if (err) return done(err);
+
+      assert.isTrue(self.storage.copyToLocal.calledWith({
+        bucket: self.settings.storageStagingBucket,
+        key: self.appId + '/' + self.buildParams.sourceTarball,
+        localPath: path.join(os.tmpdir(), self.buildParams.sourceTarball)
       }));
+
+      assert.isTrue(self.database.listVersions.calledWith(self.appId));
+      assert.isTrue(self.database.getVersion.calledWith(self.appId, self.versionId));
+      assert.equal(self.database.updateVersion.callCount, 1);
+
+      assert.isTrue(self.database.createVersion.calledWith(sinon.match({
+        versionId: self.versionId,
+        appId: self.appId,
+        userId: self.userId,
+        status: 'running',
+        startedAt: sinon.match.number,
+        manifest: manifest.defaultManifest
+      })));
+
+      assert.isTrue(self.storage.copyToStorage.calledWith({
+        bucket: self.settings.storageDeploymentBucket,
+        key: self.appId + '/' + self.versionId,
+        recursive: true,
+        localPath: self.buildParams.sourceDirectory
+      }));
+
+      assert.isTrue(self.database.updateVersion.calledWith(sinon.match({
+        versionId: self.versionId,
+        appId: self.appId,
+        status: 'complete',
+        duration: sinon.match.number
+      })));
+
+      assert.isTrue(self.database.updateTrafficRules.calledWith(
+        self.appId,
+        'production',
+        [{versionId: self.versionId, rule: '*'}]
+      ));
 
       assert.ok(version);
       assert.equal(version.status, 'complete');
@@ -129,7 +208,7 @@ describe('build', function() {
     packageJson[this.settings.packageJsonManifestKey] = {
       router: [],
       build: {
-        engine: 'basic'
+        engine: 'copy'
       }
     };
 

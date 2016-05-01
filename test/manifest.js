@@ -15,7 +15,7 @@ describe('manifest', function() {
     rimraf(this.appDir, done);
   });
 
-  it('loads from package.json', function(done) {
+  it('loads from package.json', function() {
     var manifestJson = {
       router: [{
         module: 'webpage',
@@ -25,51 +25,44 @@ describe('manifest', function() {
 
     var manifestString = JSON.stringify({_virtualApp: manifestJson});
 
-    manifest(manifestString, function(err, json) {
-      assert.deepEqual(json, manifestJson);
-      done();
-    });
+    var appManifest = manifest(manifestString);
+    assert.deepEqual(appManifest.router, manifestJson.router);
   });
 
-  it('uses default manifest for missing package.json', function(done) {
-    manifest(null, function(err, json) {
-      assert.deepEqual(json, manifest.defaultManifest);
-      done();
-    });
+  it('uses default manifest for missing package.json', function() {
+    var json = manifest(null);
+    assert.deepEqual(json, manifest.defaultManifest);
   });
 
-  it('throws error for malformed package.json', function(done) {
-    manifest('not_really_json', function(err) {
+  it('throws error for malformed package.json', function() {
+    try {
+      manifest('not_really_json');
+    } catch (err) {
       assert.ok(err);
       assert.equal(err.code, 'malformedPackageJson');
-      done();
-    });
+      return;
+    }
+    assert.fail();
   });
 
-  it('uses default manifest for missing _virtualApp', function(done) {
-    manifest(JSON.stringify({name: 'foo'}), function(err, json) {
-      assert.deepEqual(json, manifest.defaultManifest);
-      done();
-    });
+  it('uses default manifest for missing _virtualApp', function() {
+    var json = manifest(JSON.stringify({name: 'foo'}));
+    assert.deepEqual(json, manifest.defaultManifest);
   });
 
-  it('finds manifest with custom property name', function(done) {
+  it('finds manifest with custom property name', function() {
     var manifestJson = {foo: 1};
 
     var options = {propertyName: '_custom_'};
-    manifest(JSON.stringify({_custom_: manifestJson}), options, function(err, json) {
-      assert.deepEqual(json, manifestJson);
-      done();
-    });
+    var json = manifest(JSON.stringify({_custom_: manifestJson}), options);
+    assert.equal(json.foo, 1);
   });
 
-  it('find manifest with default property when custom property not found', function(done) {
+  it('find manifest with default property when custom property not found', function() {
     var manifestJson = {foo: 1};
 
     var options = {propertyName: '_custom_'};
-    manifest(JSON.stringify({_virtualApp: manifestJson}), options, function(err, json) {
-      assert.deepEqual(json, manifestJson);
-      done();
-    });
+    var json = manifest(JSON.stringify({_virtualApp: manifestJson}), options);
+    assert.equal(json.foo, 1);
   });
 });

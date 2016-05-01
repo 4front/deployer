@@ -33,11 +33,11 @@ describe('build', function() {
     };
 
     fs.ensureDirSync(this.buildParams.sourceDirectory);
-    this.basicEngine = require('../engines/basic')({});
+    this.copyEngine = require('../engines/copy')({});
   });
 
   it('virtualApp does not have a deployDirectory', function(done) {
-    this.basicEngine(this.buildParams, function(err, outputDirectory) {
+    this.copyEngine(this.buildParams, function(err, outputDirectory) {
       if (err) return done(err);
       assert.equal(self.buildParams.sourceDirectory, outputDirectory);
       done();
@@ -48,7 +48,7 @@ describe('build', function() {
     this.buildParams.virtualApp.deployDirectory = 'dist';
     var distDirectory = path.join(this.buildParams.sourceDirectory, 'dist');
     fs.outputFileSync(distDirectory + '/index.html', '<html>');
-    this.basicEngine(this.buildParams, function(err, outputDirectory) {
+    this.copyEngine(this.buildParams, function(err, outputDirectory) {
       if (err) return done(err);
       assert.equal(outputDirectory, distDirectory);
       done();
@@ -57,7 +57,7 @@ describe('build', function() {
 
   it('virtualApp deployDirectory does not exist', function(done) {
     this.buildParams.virtualApp.deployDirectory = 'missing';
-    this.basicEngine(this.buildParams, function(err) {
+    this.copyEngine(this.buildParams, function(err) {
       assert.equal(err.code, 'invalidDeployDirectory');
       done();
     });
@@ -66,7 +66,7 @@ describe('build', function() {
   it('virtualApp deployDirectory is not a directory', function(done) {
     this.buildParams.virtualApp.deployDirectory = 'file-not-directory';
     fs.writeFileSync(path.join(this.sourceDirectory, 'file-not-directory'), '');
-    this.basicEngine(this.buildParams, function(err) {
+    this.copyEngine(this.buildParams, function(err) {
       assert.equal(err.code, 'invalidDeployDirectory');
       done();
     });
@@ -79,14 +79,12 @@ describe('build', function() {
     fs.writeFileSync(phpFile, 'php');
     fs.writeFileSync(aspFile, 'asp');
 
-    this.basicEngine(this.buildParams, function(err) {
+    this.copyEngine(this.buildParams, function(err) {
       if (err) return done(err);
 
       assert.isFalse(fs.existsSync(phpFile));
       assert.isFalse(fs.existsSync(aspFile));
       done();
     });
-
-    done();
   });
 });
