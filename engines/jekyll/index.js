@@ -91,10 +91,11 @@ module.exports = function(settings) {
             }
           }
 
-          // Overwrite the url in config to the placeholder. Also delete the
-          // baseurl as it will always be the root in Aerobatic.
+          // Overwrite the url in config to the placeholder. The baseurl
+          // should be a '/' since all sites are mounted at the root of the
+          // domain.
           config.url = common.BASEURL_PLACEHOLDER;
-          delete config.baseurl;
+          config.baseurl = '/';
           cb();
         });
       },
