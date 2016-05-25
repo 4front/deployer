@@ -39,9 +39,6 @@ describe('version', function() {
         warn: function() {},
         debug: function() {}
       },
-      virtualAppRegistry: {
-        flushApp: sinon.spy(function() {})
-      },
       storage: {
         deleteFiles: sinon.spy(function(prefix, callback) {
           callback();
@@ -144,7 +141,6 @@ describe('version', function() {
           [{versionId: versionData.versionId, rule: '*'}]
         ));
 
-        assert.ok(self.settings.virtualAppRegistry.flushApp.calledWith(self.context.virtualApp));
         assert.equal(version.previewUrl,
           'http://' + self.context.virtualApp.name + '--' + virtualEnv + '.' + self.settings.virtualHost);
 
@@ -168,7 +164,6 @@ describe('version', function() {
         })));
 
         assert.isFalse(self.settings.database.updateTrafficRules.called);
-        assert.isFalse(self.settings.virtualAppRegistry.flushApp.called);
         assert.equal(version.previewUrl, self.context.virtualApp.url +
           '?_version=' + versionData.versionId);
 
