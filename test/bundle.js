@@ -385,20 +385,20 @@ describe('bundle', function() {
     ], done);
   });
 
-  it('raises error if another build with same commit exists', function(done) {
-    var commit = uid.sync(10);
-    this.settings.database.listVersions = function(appId, opts, cb) {
-      cb(null, [{versionId: uid.sync(10), commit: commit}]);
-    };
-
-    this.bundle.commit = commit;
-
-    this.deployBundle(this.bundle, this.context, function(err) {
-      assert.isObject(err);
-      assert.equal(err.code, 'versionCommitExists');
-      done();
-    });
-  });
+  // it('raises error if another build with same commit exists', function(done) {
+  //   var commit = uid.sync(10);
+  //   this.settings.database.listVersions = function(appId, opts, cb) {
+  //     cb(null, [{versionId: uid.sync(10), commit: commit}]);
+  //   };
+  //
+  //   this.bundle.commit = commit;
+  //
+  //   this.deployBundle(this.bundle, this.context, function(err) {
+  //     assert.isObject(err);
+  //     assert.equal(err.code, 'versionCommitExists');
+  //     done();
+  //   });
+  // });
 
   it('raises error if another version with initiated status', function(done) {
     this.settings.database.listVersions = function(appId, opts, cb) {
